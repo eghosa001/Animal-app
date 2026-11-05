@@ -24,6 +24,9 @@ Cross-platform (Android + iOS) animal-only social and marketplace platform with 
 | [Operations runbook](docs/12-operations.md) | Backup, monitoring, incidents, finance reconciliation |
 | [Decisions and risks](docs/13-decisions-and-risks.md) | ADRs, open decisions, risk register |
 | [Client setup checklist](docs/14-owner-checklist.md) | Self-service accounts and access delegation |
+| [UX and design system](docs/15-ux-and-design-system.md) | Screens, interactions, accessibility and mobile quality |
+| [Open-source evaluation](docs/16-open-source-evaluation.md) | Public GitHub libraries, build-vs-buy, licensing |
+| [Infrastructure and deployment](docs/17-infrastructure-and-deployment.md) | Environments, release, secrets, recovery |
 
 ## Intended repository layout
 
