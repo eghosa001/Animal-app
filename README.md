@@ -55,7 +55,7 @@ docs/                 Product, engineering, operations, business documentation
 
 ## Working foundation (M0)
 
-Initial Django and Flutter implementation lives on a feature branch until reviewed and merged. [Implementation status](docs/18-implementation-status.md) distinguishes implemented features from planned modules.
+M0 Django and Flutter foundation is merged to main via [PR #2](https://github.com/eghosa001/Animal-app/pull/2). Backend tests, Flutter analysis/widget tests and a debug Android APK build passed on 2026-11-05; see [the successful Actions run](https://github.com/eghosa001/Animal-app/actions/runs/42107300025). The APK artifact is a temporary development build, not a production release. [Implementation status](docs/18-implementation-status.md) distinguishes implemented features from planned modules.
 
 ### Local API
 
