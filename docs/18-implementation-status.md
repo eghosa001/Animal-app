@@ -1,7 +1,7 @@
 # M0 implementation status
 Updated 2026-11-05. Tracks actual implemented code, not aspirations.
 
-## Implemented on feature branch
+## Implemented on main (merged via PR #2)
 - Django app project and versioned /api/v1 routing.
 - PostgreSQL-first runtime with local SQLite fallback only when DEBUG; Docker Compose Postgres/Redis.
 - Custom email-first account model, password validators, JWT access/rotating refresh tokens, refresh-token logout.
@@ -22,8 +22,8 @@ Updated 2026-11-05. Tracks actual implemented code, not aspirations.
 - Cloud hosting, DNS, monitoring accounts, store registration, native release signing.
 
 ## Verification evidence
-- Backend CI will run against PostgreSQL service with lint, migration check, migration run and API tests.
-- Flutter CI will generate Android/iOS runner scaffold, analyze and widget-test. Actual iOS archive still requires macOS/Xcode and credentials.
+- Backend CI passed against PostgreSQL with lint, migration check, migration run and API tests on 2026-11-05.
+- Flutter CI generated Android/iOS runner scaffolds and passed analysis/widget tests. Android debug APK build passed and uploaded a seven-day workflow artifact on 2026-11-05; see https://github.com/eghosa001/Animal-app/actions/runs/42107300025. An actual iOS archive still requires macOS/Xcode and credentials.
 - Financial go-live requires written partner/legal signoff and a separately implemented audit-tested commerce module.
 - Documentation is planning source of truth; feature status is this file and GitHub PR/CI results.
 
