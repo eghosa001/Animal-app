@@ -10,7 +10,8 @@ Updated 2026-11-05. Tracks actual implemented code, not aspirations.
 - Species catalog model and safe seed command; trading OFF by default for every species.
 - Animal + Listing models; seller drafts, seller-only listing view, guarded submission, staff-only publication, public active listing API.
 - Readiness/liveness checks, backend API tests and GitHub Actions.
-- Flutter mobile source with navigation and API-connected basic marketplace/account flows; native Android/iOS template generation via flutter create bootstrap, not committed platform runners.
+- Flutter mobile source with navigation and API-connected basic marketplace/account flows, explicit adult seller attestation, email verification for signed-in users; native Android/iOS runner templates generated via flutter create bootstrap, not committed platform runners.
+- CI compiles a debug Android APK and offers a 7-day workflow artifact for device smoke testing.
 - Payment flag disabled unconditionally. No live cards, fund custody, payout or buyer protection yet.
 
 ## NOT implemented / not live

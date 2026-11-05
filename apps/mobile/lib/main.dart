@@ -263,6 +263,7 @@ class _AccountPageState extends State<AccountPage> {
   Map<String, dynamic>? _profile;
   bool _register = false;
   bool _busy = false;
+  bool _adultConfirmed = false;
   String _message = '';
 
   @override
@@ -381,12 +382,32 @@ class _AccountPageState extends State<AccountPage> {
             title: Text(profile['email_verified'] == true ? 'Email verified' : 'Email not verified'),
             subtitle: Text('Seller status: ${profile['seller_status'] ?? 'Not applied'}'),
           ),
+          if (profile['email_verified'] != true) ...[
+            TextField(
+              controller: _token,
+              decoration: const InputDecoration(labelText: 'Email verification token'),
+            ),
+            OutlinedButton(
+              onPressed: _busy ? null : () => _act(() async {
+                await widget.api.verifyEmail(profile['email']?.toString() ?? '', _token.text.trim());
+                await _loadProfile();
+                if (mounted) { setState(() => _message = 'Your email is verified.'); }
+              }),
+              child: const Text('Verify email'),
+            ),
+          ],
           if (profile['seller_status'] == null && profile['email_verified'] == true) ...[
             TextField(controller: _business, decoration: const InputDecoration(labelText: 'Breeder or seller business name')),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('I confirm I am an adult and eligible to apply as a seller'),
+              value: _adultConfirmed,
+              onChanged: _busy ? null : (checked) => setState(() => _adultConfirmed = checked ?? false),
+            ),
             const SizedBox(height: 10),
             FilledButton(
-              onPressed: _busy ? null : () => _act(() async {
-                await widget.api.applyAsSeller(_business.text.trim());
+              onPressed: _busy || !_adultConfirmed ? null : () => _act(() async {
+                await widget.api.applyAsSeller(_business.text.trim(), adultAttested: _adultConfirmed);
                 await _loadProfile();
                 if (mounted) { setState(() => _message = 'Application submitted for staff review. Approval is not automatic.'); }
               }),

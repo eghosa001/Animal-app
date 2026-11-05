@@ -177,19 +177,19 @@ class ApiClient {
     return _decode(await _authorizedGet('/api/v1/auth/me'));
   }
 
-  Future<void> applyAsSeller(String businessName) async {
+  Future<void> applyAsSeller(String businessName, {required bool adultAttested}) async {
     var access = await _storage.read(key: 'anima_access');
     if (access == null) { throw const ApiFailure('Sign in first'); }
     var response = await _post('/api/v1/auth/seller', {
       'business_name': businessName,
-      'adult_attested': true,
+      'adult_attested': adultAttested,
     }, token: access);
     if (response.statusCode == 401) {
       access = await _refresh();
       if (access == null) { throw const ApiFailure('Session expired. Sign in again.'); }
       response = await _post('/api/v1/auth/seller', {
         'business_name': businessName,
-        'adult_attested': true,
+        'adult_attested': adultAttested,
       }, token: access);
     }
     _decode(response);

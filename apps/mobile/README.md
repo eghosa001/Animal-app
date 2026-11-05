@@ -32,6 +32,9 @@ Five-tab shell, light/dark styling, real API market list with loading/error/empt
 ## Security
 Do not embed secret API tokens, user passwords or payment keys in Dart defines or source. All money and listing permissions are enforced on backend. Dart --dart-define is build-time configuration, not secret storage. Store refresh/access tokens in Flutter Secure Storage; production network must use HTTPS.
 
+## Test APK from CI
+After the Android build job passes, open the successful **Flutter quality** GitHub Actions run and download the `anima-m0-debug-apk` artifact. It is an unsigned-for-distribution debug build for development devices only. Use `adb reverse tcp:8000 tcp:8000` on a USB-connected Android phone if the app should reach the local API. Do not publish the debug APK to Play Store. Its application ID is temporary.
+
 ## Known limitations
 - Backend does not serve real media, feed, live chat, seller listing creation UI or checkout yet.
 - Default list is empty until admins approve sellers and permitted species then manually approve submitted listings.
