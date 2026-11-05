@@ -53,6 +53,29 @@ docs/                 Product, engineering, operations, business documentation
 7. Require documented test evidence for financial, delivery, privacy, and moderation release gates.
 8. Recheck provider policies and prices before contracts; planning figures are not vendor quotes.
 
+## Working foundation (M0)
+
+Initial Django and Flutter implementation lives on a feature branch until reviewed and merged. [Implementation status](docs/18-implementation-status.md) distinguishes implemented features from planned modules.
+
+### Local API
+
+```sh
+docker compose up -d postgres redis
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -r backend/requirements-dev.txt
+export DJANGO_DEBUG=true
+export DJANGO_SECRET_KEY=local-only-test-secret-not-production
+export DATABASE_URL=postgresql://anima:dev_only_not_for_production@127.0.0.1:5432/anima_dev
+python backend/manage.py migrate
+python backend/manage.py seed_catalog
+python backend/manage.py runserver
+```
+
+Or run the local containerized API with `docker compose --profile app up --build -d` (the `app` profile starts backend plus database/Redis). See `apps/mobile/README.md` for Android/iOS development. API: `/health/live`, `/health/ready`, `/api/v1/auth/`, `/api/v1/catalog/species`, `/api/v1/listings/`.
+
+For local verification emails, check the Django console output; **never use console email in production**. Currency amounts are integer minor units, e.g. NGN 250,000 = `25000000`. New species are **not approved for trade** automatically. Production payments remain disabled.
+
 ## First milestone
 
 Approve product requirements, jurisdiction/species rules, user-flow designs, payment partner requirements, and the client-owned service accounts. Then scaffold the Flutter app, Django backend, Docker Compose, OpenAPI schema, and CI on feature branches.

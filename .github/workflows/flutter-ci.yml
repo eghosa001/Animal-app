@@ -1,0 +1,36 @@
+name: Flutter quality
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/mobile/**'
+      - '.github/workflows/flutter-ci.yml'
+  pull_request:
+    paths:
+      - 'apps/mobile/**'
+      - '.github/workflows/flutter-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  flutter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Generate native runner scaffold
+        run: |
+          cd apps/mobile
+          flutter create --platforms=android,ios --project-name anima_app --org com.anima .
+      - name: Dependencies and static analysis
+        run: |
+          cd apps/mobile
+          flutter pub get
+          dart format --output=none --set-exit-if-changed lib test
+          flutter analyze
+      - name: Widget tests
+        run: cd apps/mobile && flutter test

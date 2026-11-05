@@ -1,0 +1,53 @@
+# Local development only. Never run Django's development server as production.
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: anima_dev
+      POSTGRES_USER: anima
+      POSTGRES_PASSWORD: dev_only_not_for_production
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - anima_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U anima -d anima_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  api:
+    profiles: ["app"]
+    build: ./backend
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             uvicorn config.asgi:application --host 0.0.0.0 --port 8000"
+    restart: unless-stopped
+    environment:
+      DJANGO_DEBUG: "true"
+      DJANGO_ALLOWED_HOSTS: "127.0.0.1,localhost,0.0.0.0"
+      DJANGO_SECRET_KEY: "unsafe-local-compose-only-never-production"
+      DATABASE_URL: "postgresql://anima:dev_only_not_for_production@postgres:5432/anima_dev"
+      REDIS_URL: "redis://redis:6379/0"
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  anima_postgres:
