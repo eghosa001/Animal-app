@@ -13,6 +13,9 @@ class UserAdmin(admin.ModelAdmin):
     list_filter = ("is_active", "is_staff")
     ordering = ("email",)
 
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_superuser
+
     def has_add_permission(self, request):
         # Use createsuperuser or public registration; the generic admin does not hash passwords.
         return False

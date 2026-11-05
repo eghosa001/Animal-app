@@ -274,7 +274,7 @@ class _AccountPageState extends State<AccountPage> {
   Future<void> _loadProfile() async {
     try {
       final profile = await widget.api.me();
-      if (mounted) setState(() => _profile = profile);
+      if (mounted) { setState(() => _profile = profile); }
     } catch (_) {
       // Expired sessions are handled by the API client on the next login.
     }
@@ -288,11 +288,11 @@ class _AccountPageState extends State<AccountPage> {
     try {
       await action();
     } on ApiFailure catch (error) {
-      if (mounted) setState(() => _message = error.message);
+      if (mounted) { setState(() => _message = error.message); }
     } catch (_) {
-      if (mounted) setState(() => _message = 'Network error. Please try again.');
+      if (mounted) { setState(() => _message = 'Network error. Please try again.'); }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) { setState(() => _busy = false); }
     }
   }
 
@@ -350,15 +350,15 @@ class _AccountPageState extends State<AccountPage> {
           const SizedBox(height: 20),
           FilledButton(
             onPressed: _busy ? null : () {
-              if (!_formKey.currentState!.validate()) return;
+              if (!_formKey.currentState!.validate()) { return; }
               _act(() async {
                 if (_register) {
                   await widget.api.register(email: _email.text.trim(), displayName: _name.text.trim(), password: _password.text);
-                  if (mounted) setState(() => _message = 'Account registered. Check your email for a verification token; then sign in.');
+                  if (mounted) { setState(() => _message = 'Account registered. Check your email for a verification token; then sign in.'); }
                 } else {
                   await widget.api.login(_email.text.trim(), _password.text);
                   final profile = await widget.api.me();
-                  if (mounted) setState(() => _profile = profile);
+                  if (mounted) { setState(() => _profile = profile); }
                 }
               });
             },
@@ -370,7 +370,7 @@ class _AccountPageState extends State<AccountPage> {
           OutlinedButton(
             onPressed: _busy ? null : () => _act(() async {
               await widget.api.verifyEmail(_email.text.trim(), _token.text.trim());
-              if (mounted) setState(() => _message = 'Email verified. You may now sign in.');
+              if (mounted) { setState(() => _message = 'Email verified. You may now sign in.'); }
             }),
             child: const Text('Verify email'),
           ),
@@ -388,7 +388,7 @@ class _AccountPageState extends State<AccountPage> {
               onPressed: _busy ? null : () => _act(() async {
                 await widget.api.applyAsSeller(_business.text.trim());
                 await _loadProfile();
-                if (mounted) setState(() => _message = 'Application submitted for staff review. Approval is not automatic.');
+                if (mounted) { setState(() => _message = 'Application submitted for staff review. Approval is not automatic.'); }
               }),
               child: const Text('Apply to become a seller (adults only)'),
             ),
@@ -396,7 +396,7 @@ class _AccountPageState extends State<AccountPage> {
           OutlinedButton(
             onPressed: _busy ? null : () => _act(() async {
               await widget.api.logout();
-              if (mounted) setState(() => _profile = null);
+              if (mounted) { setState(() => _profile = null); }
             }),
             child: const Text('Sign out'),
           ),

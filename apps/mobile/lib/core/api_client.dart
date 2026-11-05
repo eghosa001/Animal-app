@@ -84,7 +84,7 @@ class ApiClient {
     }
     if (response.statusCode < 200 || response.statusCode >= 300) {
       final detail = body['detail'];
-      if (detail is String) throw ApiFailure(detail);
+      if (detail is String) { throw ApiFailure(detail); }
       final first = body.values.isEmpty ? 'Request failed' : body.values.first;
       throw ApiFailure(first is List ? first.join(', ') : first.toString());
     }
@@ -136,7 +136,7 @@ class ApiClient {
 
   Future<String?> _refresh() async {
     final refresh = await _storage.read(key: 'anima_refresh');
-    if (refresh == null) return null;
+    if (refresh == null) { return null; }
     try {
       final body = _decode(await _post('/api/v1/auth/refresh', {
         'refresh': refresh,
@@ -156,14 +156,14 @@ class ApiClient {
 
   Future<http.Response> _authorizedGet(String path) async {
     var access = await _storage.read(key: 'anima_access');
-    if (access == null) throw const ApiFailure('Sign in to continue');
+    if (access == null) { throw const ApiFailure('Sign in to continue'); }
     var response = await _client.get(
       _uri(path),
       headers: {'Authorization': 'Bearer $access'},
     ).timeout(const Duration(seconds: 15));
     if (response.statusCode == 401) {
       access = await _refresh();
-      if (access == null) throw const ApiFailure('Session expired. Sign in again.');
+      if (access == null) { throw const ApiFailure('Session expired. Sign in again.'); }
       response = await _client.get(
         _uri(path),
         headers: {'Authorization': 'Bearer $access'},
@@ -173,20 +173,20 @@ class ApiClient {
   }
 
   Future<Map<String, dynamic>?> me() async {
-    if (await _storage.read(key: 'anima_access') == null) return null;
+    if (await _storage.read(key: 'anima_access') == null) { return null; }
     return _decode(await _authorizedGet('/api/v1/auth/me'));
   }
 
   Future<void> applyAsSeller(String businessName) async {
     var access = await _storage.read(key: 'anima_access');
-    if (access == null) throw const ApiFailure('Sign in first');
+    if (access == null) { throw const ApiFailure('Sign in first'); }
     var response = await _post('/api/v1/auth/seller', {
       'business_name': businessName,
       'adult_attested': true,
     }, token: access);
     if (response.statusCode == 401) {
       access = await _refresh();
-      if (access == null) throw const ApiFailure('Session expired. Sign in again.');
+      if (access == null) { throw const ApiFailure('Session expired. Sign in again.'); }
       response = await _post('/api/v1/auth/seller', {
         'business_name': businessName,
         'adult_attested': true,

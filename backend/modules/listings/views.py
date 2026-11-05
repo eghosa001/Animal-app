@@ -33,6 +33,13 @@ class ListingViewSet(
     def get_permissions(self):
         return [AllowAny()] if self.action in ("list", "retrieve") else [IsAuthenticated()]
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        # Creation accepts nested write-only fields; return the public read schema instead.
+        return Response(ListingReadSerializer(serializer.instance).data, status=status.HTTP_201_CREATED)
+
     def perform_create(self, serializer):
         if not self.request.user.is_email_verified:
             raise PermissionDenied("Verify your email before creating a listing")
