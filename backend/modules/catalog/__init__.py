@@ -1,0 +1,1 @@
+"""Lawful animal taxonomy configuration."""

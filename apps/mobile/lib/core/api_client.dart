@@ -1,0 +1,221 @@
+import 'dart:convert';
+
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
+
+const apiBaseUrl = String.fromEnvironment(
+  'API_BASE_URL',
+  defaultValue: 'http://127.0.0.1:8000',
+);
+
+class ApiFailure implements Exception {
+  const ApiFailure(this.message);
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
+class AnimalListing {
+  const AnimalListing({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.speciesName,
+    required this.animalName,
+    required this.sellerName,
+    required this.region,
+    required this.currency,
+    required this.priceMinor,
+  });
+
+  final String id;
+  final String title;
+  final String description;
+  final String speciesName;
+  final String animalName;
+  final String sellerName;
+  final String region;
+  final String currency;
+  final int priceMinor;
+
+  factory AnimalListing.fromJson(Map<String, dynamic> json) {
+    final species = json['species'] as Map<String, dynamic>? ?? {};
+    return AnimalListing(
+      id: json['id'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      speciesName: species['name'] as String? ?? 'Animal',
+      animalName: json['animal_name'] as String? ?? '',
+      sellerName: json['seller_name'] as String? ?? '',
+      region: json['region'] as String? ?? '',
+      currency: json['currency'] as String? ?? 'NGN',
+      priceMinor: (json['price_minor'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  String get displayPrice {
+    final major = (priceMinor / 100).toStringAsFixed(2);
+    return '${currency == 'NGN' ? '₦' : '$currency '}$major';
+  }
+}
+
+class ApiClient {
+  ApiClient({
+    http.Client? client,
+    FlutterSecureStorage? storage,
+    String? baseUrl,
+  }) : _client = client ?? http.Client(),
+       _storage = storage ?? const FlutterSecureStorage(),
+       _baseUrl = (baseUrl ?? apiBaseUrl).replaceFirst(RegExp(r'/$'), '');
+
+  final http.Client _client;
+  final FlutterSecureStorage _storage;
+  final String _baseUrl;
+
+  Uri _uri(String path) => Uri.parse('$_baseUrl$path');
+
+  Map<String, dynamic> _decode(http.Response response) {
+    Map<String, dynamic> body;
+    try {
+      body = jsonDecode(response.body) as Map<String, dynamic>;
+    } catch (_) {
+      throw ApiFailure('Unexpected server response (${response.statusCode})');
+    }
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      final detail = body['detail'];
+      if (detail is String) { throw ApiFailure(detail); }
+      final first = body.values.isEmpty ? 'Request failed' : body.values.first;
+      throw ApiFailure(first is List ? first.join(', ') : first.toString());
+    }
+    return body;
+  }
+
+  Future<http.Response> _post(
+    String path,
+    Map<String, dynamic> data, {
+    String? token,
+  }) {
+    return _client.post(
+      _uri(path),
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(data),
+    ).timeout(const Duration(seconds: 15));
+  }
+
+  Future<void> register({
+    required String email,
+    required String displayName,
+    required String password,
+  }) async {
+    _decode(await _post('/api/v1/auth/register', {
+      'email': email,
+      'display_name': displayName,
+      'password': password,
+    }));
+  }
+
+  Future<void> verifyEmail(String email, String token) async {
+    _decode(await _post('/api/v1/auth/verify-email', {
+      'email': email,
+      'token': token,
+    }));
+  }
+
+  Future<void> login(String email, String password) async {
+    final result = _decode(await _post('/api/v1/auth/login', {
+      'email': email,
+      'password': password,
+    }));
+    await _storage.write(key: 'anima_access', value: result['access'] as String);
+    await _storage.write(key: 'anima_refresh', value: result['refresh'] as String);
+  }
+
+  Future<String?> _refresh() async {
+    final refresh = await _storage.read(key: 'anima_refresh');
+    if (refresh == null) { return null; }
+    try {
+      final body = _decode(await _post('/api/v1/auth/refresh', {
+        'refresh': refresh,
+      }));
+      final access = body['access'] as String;
+      await _storage.write(key: 'anima_access', value: access);
+      if (body['refresh'] is String) {
+        await _storage.write(key: 'anima_refresh', value: body['refresh'] as String);
+      }
+      return access;
+    } catch (_) {
+      await _storage.delete(key: 'anima_access');
+      await _storage.delete(key: 'anima_refresh');
+      return null;
+    }
+  }
+
+  Future<http.Response> _authorizedGet(String path) async {
+    var access = await _storage.read(key: 'anima_access');
+    if (access == null) { throw const ApiFailure('Sign in to continue'); }
+    var response = await _client.get(
+      _uri(path),
+      headers: {'Authorization': 'Bearer $access'},
+    ).timeout(const Duration(seconds: 15));
+    if (response.statusCode == 401) {
+      access = await _refresh();
+      if (access == null) { throw const ApiFailure('Session expired. Sign in again.'); }
+      response = await _client.get(
+        _uri(path),
+        headers: {'Authorization': 'Bearer $access'},
+      ).timeout(const Duration(seconds: 15));
+    }
+    return response;
+  }
+
+  Future<Map<String, dynamic>?> me() async {
+    if (await _storage.read(key: 'anima_access') == null) { return null; }
+    return _decode(await _authorizedGet('/api/v1/auth/me'));
+  }
+
+  Future<void> applyAsSeller(String businessName, {required bool adultAttested}) async {
+    var access = await _storage.read(key: 'anima_access');
+    if (access == null) { throw const ApiFailure('Sign in first'); }
+    var response = await _post('/api/v1/auth/seller', {
+      'business_name': businessName,
+      'adult_attested': adultAttested,
+    }, token: access);
+    if (response.statusCode == 401) {
+      access = await _refresh();
+      if (access == null) { throw const ApiFailure('Session expired. Sign in again.'); }
+      response = await _post('/api/v1/auth/seller', {
+        'business_name': businessName,
+        'adult_attested': adultAttested,
+      }, token: access);
+    }
+    _decode(response);
+  }
+
+  Future<List<AnimalListing>> getListings() async {
+    final response = await _client.get(
+      _uri('/api/v1/listings/'),
+    ).timeout(const Duration(seconds: 15));
+    final payload = _decode(response);
+    final raw = payload['results'] as List<dynamic>? ?? [];
+    return raw.map((item) => AnimalListing.fromJson(item as Map<String, dynamic>)).toList();
+  }
+
+  Future<void> logout() async {
+    final refresh = await _storage.read(key: 'anima_refresh');
+    final access = await _storage.read(key: 'anima_access');
+    try {
+      if (refresh != null && access != null) {
+        await _post('/api/v1/auth/logout', {'refresh': refresh}, token: access);
+      }
+    } finally {
+      await _storage.delete(key: 'anima_access');
+      await _storage.delete(key: 'anima_refresh');
+    }
+  }
+
+  void dispose() => _client.close();
+}
