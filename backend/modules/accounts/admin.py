@@ -2,7 +2,7 @@
 from django.contrib import admin
 from django.utils import timezone
 
-from .models import EmailVerificationChallenge, SellerProfile, User
+from .models import SellerProfile, User
 
 
 @admin.register(User)
@@ -12,6 +12,10 @@ class UserAdmin(admin.ModelAdmin):
     readonly_fields = ("id", "password", "email_verified_at", "last_login", "date_joined")
     list_filter = ("is_active", "is_staff")
     ordering = ("email",)
+
+    def has_add_permission(self, request):
+        # Use createsuperuser or public registration; the generic admin does not hash passwords.
+        return False
 
 
 @admin.register(SellerProfile)
@@ -25,6 +29,3 @@ class SellerProfileAdmin(admin.ModelAdmin):
         if obj.status != SellerProfile.Status.PENDING and obj.reviewed_at is None:
             obj.reviewed_at = timezone.now()
         super().save_model(request, obj, form, change)
-
-
-# Verification tokens contain only hashes; no staff interface needed.
