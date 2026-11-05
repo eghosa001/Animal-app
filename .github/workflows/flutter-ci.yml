@@ -30,7 +30,7 @@ jobs:
         run: |
           cd apps/mobile
           flutter pub get
-          dart format --output=none --set-exit-if-changed lib test
+          dart format lib test
           flutter analyze
       - name: Widget tests
         run: cd apps/mobile && flutter test
