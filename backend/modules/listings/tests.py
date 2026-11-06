@@ -121,6 +121,17 @@ class ListingApiTests(APITestCase):
         self.assertEqual(self.client.get("/api/v1/listings/").data["count"], 0)
         self.assertEqual(self.client.get(url).status_code, 404)  # Not public.
 
+    def test_age_estimate_can_be_cleared_on_draft_edit(self):
+        draft = self.client.post("/api/v1/listings/", self.payload, format="json")
+        url = f"/api/v1/listings/{draft.data['id']}/"
+        updated = self.client.patch(
+            url, {"estimated_age_months": None}, format="json"
+        )
+        self.assertEqual(updated.status_code, 200, updated.data)
+        self.assertIsNone(updated.data["estimated_age_months"])
+        animal = Animal.objects.get(listing__pk=draft.data["id"])
+        self.assertIsNone(animal.estimated_age_months)
+
     def test_invalid_partial_patch_rolls_back_entire_edit(self):
         draft = self.client.post("/api/v1/listings/", self.payload, format="json")
         url = f"/api/v1/listings/{draft.data['id']}/"

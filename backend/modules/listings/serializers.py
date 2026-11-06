@@ -49,7 +49,7 @@ class ListingCreateSerializer(serializers.Serializer):
     animal_name = serializers.CharField(min_length=2, max_length=120)
     breed_label = serializers.CharField(max_length=120, required=False, allow_blank=True)
     sex = serializers.ChoiceField(choices=Animal.Sex.choices, default=Animal.Sex.UNKNOWN)
-    estimated_age_months = serializers.IntegerField(required=False, min_value=0, max_value=1200)
+    estimated_age_months = serializers.IntegerField(required=False, allow_null=True, min_value=0, max_value=1200)
 
     @transaction.atomic
     def create(self, validated_data):

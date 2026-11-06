@@ -1,4 +1,7 @@
 import 'dart:convert';
+import 'dart:typed_data';
+
+import 'listing_models.dart';
 
 import 'package:http_parser/http_parser.dart';
 
@@ -201,11 +204,130 @@ class ApiClient {
   }
 
 
-  /// Draft listings owned by this seller. Photos may be uploaded only to drafts.
+  /// Fetch every page, rather than silently showing only the first 20 drafts.
   Future<List<Map<String, dynamic>>> getMyListings() async {
-    final body = _decode(await _authorizedGet('/api/v1/listings/mine/'));
-    final items = body['results'] as List<dynamic>? ?? [];
-    return items.cast<Map<String, dynamic>>();
+    final all = <Map<String, dynamic>>[];
+    for (var page = 1; page <= 100; page++) {
+      final data = _decode(await _authorizedGet('/api/v1/listings/mine/?page=$page'));
+      final rows = data['results'];
+      if (rows is! List) {
+        throw const ApiFailure('Unexpected listing response');
+      }
+      all.addAll(rows.cast<Map<String, dynamic>>());
+      if (data['next'] == null) {
+        return all;
+      }
+    }
+    throw const ApiFailure('Too many listing pages. Narrow your search.');
+  }
+
+  Future<List<SpeciesOption>> getSpecies() async {
+    final response = await _client.get(
+      _uri('/api/v1/catalog/species'),
+    ).timeout(const Duration(seconds: 15));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw const ApiFailure('Could not load the animal catalogue');
+    }
+    final dynamic decoded;
+    try {
+      decoded = jsonDecode(response.body);
+    } catch (_) {
+      throw const ApiFailure('Unexpected catalogue response');
+    }
+    if (decoded is! List) {
+      throw const ApiFailure('Unexpected catalogue response');
+    }
+    return decoded.map((item) => SpeciesOption.fromJson(
+      item as Map<String, dynamic>,
+    )).toList();
+  }
+
+  Future<Map<String, dynamic>> saveListingDraft(
+    Map<String, dynamic> values, {
+    String? listingId,
+  }) async {
+    final patch = listingId != null;
+    final path = patch ? '/api/v1/listings/$listingId/' : '/api/v1/listings/';
+
+    Future<http.Response> send(String token) {
+      return patch
+          ? _client.patch(
+              _uri(path),
+              headers: {
+                'Authorization': 'Bearer $token',
+                'Content-Type': 'application/json',
+              },
+              body: jsonEncode(values),
+            ).timeout(const Duration(seconds: 15))
+          : _post(path, values, token: token);
+    }
+
+    var token = await _storage.read(key: 'anima_access');
+    if (token == null) {
+      throw const ApiFailure('Please sign in to manage listings');
+    }
+    var response = await send(token);
+    if (response.statusCode == 401) {
+      token = await _refresh();
+      if (token == null) {
+        throw const ApiFailure('Session expired. Sign in again.');
+      }
+      response = await send(token);
+    }
+    return _decode(response);
+  }
+
+  Future<Map<String, dynamic>> submitListing(String listingId) async {
+    var token = await _storage.read(key: 'anima_access');
+    if (token == null) {
+      throw const ApiFailure('Please sign in');
+    }
+    final path = '/api/v1/listings/$listingId/submit/';
+    var response = await _post(path, {}, token: token);
+    if (response.statusCode == 401) {
+      token = await _refresh();
+      if (token == null) {
+        throw const ApiFailure('Session expired. Sign in again.');
+      }
+      response = await _post(path, {}, token: token);
+    }
+    return _decode(response);
+  }
+
+  Future<void> removeDraftPhoto(String assetId) async {
+    Future<http.Response> send(String token) => _client.delete(
+      _uri('/api/v1/media/$assetId/'),
+      headers: {'Authorization': 'Bearer $token'},
+    ).timeout(const Duration(seconds: 15));
+
+    var token = await _storage.read(key: 'anima_access');
+    if (token == null) {
+      throw const ApiFailure('Sign in to manage animal photos');
+    }
+    var response = await send(token);
+    if (response.statusCode == 401) {
+      token = await _refresh();
+      if (token == null) {
+        throw const ApiFailure('Session expired. Sign in again.');
+      }
+      response = await send(token);
+    }
+    if (response.statusCode != 204) {
+      _decode(response);
+      throw const ApiFailure('Could not remove this photograph');
+    }
+  }
+
+  Future<Uint8List> readMyPhoto(String urlPath) async {
+    if (!RegExp(r'^/api/v1/media/[0-9a-fA-F-]{36}/file/$').hasMatch(urlPath)) {
+      throw const ApiFailure('Invalid photo reference');
+    }
+    final response = await _authorizedGet(urlPath);
+    if (response.statusCode != 200) {
+      _decode(response);
+      throw const ApiFailure('Photo cannot be viewed');
+    }
+    return response.bodyBytes;
   }
 
   /// The owner can see upload status but never private storage keys or bucket details.
