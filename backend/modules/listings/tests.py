@@ -4,7 +4,7 @@ from rest_framework.test import APITestCase
 
 from modules.accounts.models import SellerProfile, User
 from modules.catalog.models import Species
-from modules.media.models import MediaAsset
+from modules.media.models import MediaAsset, MediaReviewEvent
 from modules.media.services import review_listing_photo
 
 from .models import Animal, Listing, ListingEvent
@@ -120,6 +120,72 @@ class ListingApiTests(APITestCase):
         self.assertEqual(listing.seller, self.user)
         self.assertEqual(self.client.get("/api/v1/listings/").data["count"], 0)
         self.assertEqual(self.client.get(url).status_code, 404)  # Not public.
+
+    def test_identity_edit_reopens_approved_photos_for_review(self):
+        created = self.client.post("/api/v1/listings/", self.payload, format="json")
+        listing = Listing.objects.get(pk=created.data["id"])
+        asset = MediaAsset.objects.create(
+            owner=self.user, listing=listing,
+            kind=MediaAsset.Kind.LISTING_PHOTO,
+            state=MediaAsset.State.APPROVED,
+            storage_key="listing-photos/verified-before-edit.jpg",
+            size_bytes=100, width=32, height=24, sha256="e" * 64,
+        )
+        changed = self.client.patch(
+            f"/api/v1/listings/{listing.pk}/",
+            {"animal_name": "Different animal"},
+            format="json",
+        )
+        self.assertEqual(changed.status_code, 200, changed.data)
+        asset.refresh_from_db()
+        self.assertEqual(asset.state, MediaAsset.State.PENDING)
+        self.assertIsNone(asset.reviewed_at)
+        self.assertTrue(MediaReviewEvent.objects.filter(
+            asset=asset, actor=self.user, decision="invalidate"
+        ).exists())
+
+        self.seller.status = SellerProfile.Status.APPROVED
+        self.seller.save(update_fields=["status"])
+        self.species.trade_enabled = True
+        self.species.save(update_fields=["trade_enabled"])
+        self.assertEqual(
+            self.client.post(f"/api/v1/listings/{listing.pk}/submit/").status_code,
+            200,
+        )
+        staff = User.objects.create_superuser(
+            email="approval-staff@example.com", password="ReviewerPass!2026",
+            display_name="Moderator",
+        )
+        with self.assertRaisesMessage(Exception, "approved animal photograph"):
+            approve_listing(listing.pk, staff)
+
+        review_listing_photo(
+            asset_id=asset.pk, reviewer=staff, decision="approve",
+            reason="New animal identity and photograph reviewed after seller edit.",
+        )
+        approve_listing(listing.pk, staff)
+        listing.refresh_from_db()
+        self.assertEqual(listing.status, Listing.Status.ACTIVE)
+
+    def test_text_only_draft_edit_does_not_revoke_valid_photo(self):
+        created = self.client.post("/api/v1/listings/", self.payload, format="json")
+        listing = Listing.objects.get(pk=created.data["id"])
+        asset = MediaAsset.objects.create(
+            owner=self.user, listing=listing,
+            kind=MediaAsset.Kind.LISTING_PHOTO,
+            state=MediaAsset.State.APPROVED,
+            storage_key="listing-photos/unchanged.jpg",
+            size_bytes=100, width=32, height=24, sha256="f" * 64,
+        )
+        changed = self.client.patch(
+            f"/api/v1/listings/{listing.pk}/",
+            {"description": "Updated listing description. No animal identity details changed."},
+            format="json",
+        )
+        self.assertEqual(changed.status_code, 200, changed.data)
+        asset.refresh_from_db()
+        self.assertEqual(asset.state, MediaAsset.State.APPROVED)
+        self.assertFalse(MediaReviewEvent.objects.filter(asset=asset).exists())
 
     def test_age_estimate_can_be_cleared_on_draft_edit(self):
         draft = self.client.post("/api/v1/listings/", self.payload, format="json")

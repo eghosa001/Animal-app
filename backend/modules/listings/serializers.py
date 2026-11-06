@@ -19,7 +19,7 @@ class ListingReadSerializer(serializers.ModelSerializer):
 
     def get_photo_urls(self, obj):
         from django.urls import reverse
-        from modules.media.models import MediaAsset
+        from modules.media.models import MediaAsset, MediaReviewEvent
 
         return [
             reverse("media-file", kwargs={"asset_id": asset.pk})
@@ -104,9 +104,36 @@ class ListingCreateSerializer(serializers.Serializer):
             "sex": validated_data.pop("sex", animal.sex),
             "estimated_age_months": validated_data.pop("estimated_age_months", animal.estimated_age_months),
         }
+        # Changing the advertised animal identity invalidates any earlier
+        # photo approval; the moderator must inspect the image again.
+        identity_changed = any(
+            getattr(animal, field) != value
+            for field, value in animal_fields.items()
+        )
         for field, value in animal_fields.items():
             setattr(animal, field, value)
         animal.save(update_fields=list(animal_fields))
+
+        if identity_changed:
+            approved_photos = list(
+                MediaAsset.objects.select_for_update(of=("self",)).filter(
+                    listing=listing, kind=MediaAsset.Kind.LISTING_PHOTO,
+                    state=MediaAsset.State.APPROVED,
+                )
+            )
+            for photo in approved_photos:
+                photo.state = MediaAsset.State.PENDING
+                photo.reviewed_by = None
+                photo.reviewed_at = None
+                photo.review_note = ""
+                photo.save(update_fields=(
+                    "state", "reviewed_by", "reviewed_at", "review_note"
+                ))
+                MediaReviewEvent.objects.create(
+                    asset=photo, actor=actor,
+                    decision="invalidate",
+                    reason="Animal identifying details changed in a private draft",
+                )
 
         allowed_listing_fields = ("title", "description", "price_minor", "currency", "region")
         changed = []
