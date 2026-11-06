@@ -29,6 +29,7 @@ class AnimalListing {
     required this.region,
     required this.currency,
     required this.priceMinor,
+    required this.photoUrls,
   });
 
   final String id;
@@ -40,6 +41,7 @@ class AnimalListing {
   final String region;
   final String currency;
   final int priceMinor;
+  final List<String> photoUrls;
 
   factory AnimalListing.fromJson(Map<String, dynamic> json) {
     final species = json['species'] as Map<String, dynamic>? ?? {};
@@ -53,6 +55,7 @@ class AnimalListing {
       region: json['region'] as String? ?? '',
       currency: json['currency'] as String? ?? 'NGN',
       priceMinor: (json['price_minor'] as num?)?.toInt() ?? 0,
+      photoUrls: (json['photo_urls'] as List<dynamic>? ?? []).whereType<String>().toList(),
     );
   }
 

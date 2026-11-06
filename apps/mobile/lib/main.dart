@@ -205,7 +205,19 @@ class _MarketplacePageState extends State<MarketplacePage> {
               final item = listings[index];
               return Card(
                 child: ListTile(
-                  leading: const Icon(Icons.pets_outlined, size: 34),
+                  leading: item.photoUrls.isEmpty
+                      ? const Icon(Icons.pets_outlined, size: 34)
+                      : ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            Uri.parse(apiBaseUrl).resolve(item.photoUrls.first).toString(),
+                            width: 56,
+                            height: 56,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(Icons.pets_outlined, size: 34),
+                          ),
+                        ),
                   title: Text(item.title),
                   subtitle: Text('${item.speciesName} • ${item.region}\nSeller: ${item.sellerName}'),
                   isThreeLine: true,
