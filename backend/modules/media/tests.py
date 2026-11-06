@@ -4,6 +4,7 @@ import tempfile
 from unittest.mock import MagicMock, patch
 
 from django.contrib.auth.models import Permission
+from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
 from django.utils import timezone
@@ -32,6 +33,9 @@ def photo_file(*, format="PNG", declared=None, size=(32, 24)):
 @override_settings(DEBUG=True, MEDIA_STORAGE_BACKEND="local")
 class PrivateMediaApiTests(APITestCase):
     def setUp(self):
+        # DRF's anonymous/user throttles use a shared cache across test cases.
+        # Reset between cases to test object access, not unrelated rate-limit history.
+        cache.clear()
         self.tempdir = tempfile.TemporaryDirectory()
         self.addCleanup(self.tempdir.cleanup)
         self.root_override = override_settings(PRIVATE_MEDIA_ROOT=self.tempdir.name)
