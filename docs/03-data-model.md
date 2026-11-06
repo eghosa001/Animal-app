@@ -1,6 +1,10 @@
 # Logical data model, constraints and migrations
 Version 0.1 — 2026-11-05. Table names conceptual; migrations will define final fields.
 
+## Species and inventory modelling note (2026-11-06)
+
+The original one-Animal/one-Listing model is an initial **individual animal** scaffold, not the complete marketplace schema. The authoritative specification for individually identified animals, separately allocated litter members, legally permitted inventory lots, species-specific fields, health evidence provenance and reservation concurrency is [animal identity and inventory](22-animal-identity-and-inventory.md). Future schema migrations must follow that design after client confirms sales modes. Until then, litter/lot sales cannot be simulated by modifying individual-animal quantity and must remain disabled.
+
 ## Identity
 - User(id UUID, email unique case-insensitive, phone optional unique after verification, password hash, email_verified_at, state, created_at).
 - Profile(user FK unique, display_name, region, bio, avatar_asset, preferences).
