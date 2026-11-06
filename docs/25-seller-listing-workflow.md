@@ -8,7 +8,7 @@
 2. Open the app **Create** tab or **Profile → Manage animal listings**.
 3. Choose one animal category from the server catalogue. The form deliberately supports one identified animal (INDIVIDUAL), not litters, flocks, aquarium lots or wholesale inventory.
 4. Enter title, individual animal name, optional breed/variety, sex (unknown is permitted), estimated age (optional), coarse city/state location, price in NGN and truthful animal description. Currency parses to integer kobo, not floating point.
-5. Save private draft; it never becomes public by saving. Existing drafts may be edited until submission; animal species cannot be changed while gallery photos remain attached. All changes are reauthorized on the server and stored in one PostgreSQL transaction.
+5. Save private draft; it never becomes public by saving. Existing drafts may be edited until submission; animal species cannot be changed while gallery photos remain attached. All changes are reauthorized on the server and stored in one PostgreSQL transaction. If animal identity fields change after a photograph was approved, those photo approvals return to pending and a reviewer must re-check the images; changing description text alone does not reset photo approval.
 6. Add up to eight JPEG/PNG photos from a device. Every uploaded photo is private pending moderation. Photos can be removed from drafts only; removing a photo hides it and creates an event record, while the retained object awaits approved erasure policy.
 7. Seller must be approved, animal species enabled for commerce under reviewed policy, and at least one photo uploaded to request moderation. The server—not mobile state—enforces this.
 8. Staff must independently approve an animal photo before the submitted listing can become public. After submission, seller title/animal/price changes are blocked in this version; more complex re-review/edit workflows require a separate feature.
@@ -45,7 +45,7 @@
 - Listing payload cannot set `seller` or `status`, and only DRAFT can change. No cross-owner access.
 - Invalid prices cannot be saved; 0.01 NGN correctly maps to one minor unit; large amounts are bounded by backend.
 - Seller and species permission transitions override stale mobile actions.
-- Submission requires at least one uploaded photo; publishing requires an APPROVED photo.
+- Submission requires at least one uploaded photo; publishing requires an APPROVED photo. Identity changes invalidate previously approved photos until re-reviewed.
 - Gallery limit is eight active photos and removing one frees exactly one slot; reviewer and owner events stay auditable.
 - Backend lint/migration/PostgreSQL tests, Flutter analyzer/widget tests, and Android debug build green on the PR commit. Actual device upload/HTTP staging and iOS Xcode checks are **still unverified** until separately performed.
 

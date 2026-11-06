@@ -19,6 +19,7 @@ Updated 2026-11-06. Distinguishes working development code from unbuilt producti
 - [PR #17](https://github.com/eghosa001/Animal-app/pull/17): create/edit draft APIs, per-object permission and state enforcement, atomic updates, cannot edit after submission; require uploaded photo to submit and staff-approved photo to publish.
 - [PR #18](https://github.com/eghosa001/Animal-app/pull/18): auditable *soft removal* of draft photos, revoked reads and reusable draft gallery slots. Physical storage deletion is a future regulated retention/erasure process.
 - [PR #19](https://github.com/eghosa001/Animal-app/pull/19): Flutter Create tab and Profile seller workspace, individual-animal create/edit with species-category guidance, price parsing using integer kobo, draft list, photo gallery previews/removal and submission confirmation, owner session and offline/error states.
+- [PR #21](https://github.com/eghosa001/Animal-app/pull/21): changing an animal's identifying fields on a draft invalidates prior approved photos and creates an audit event; fresh photo review is required before public listing approval. [Backend CI](https://github.com/eghosa001/Animal-app/actions/runs/42213077913) passed **48 tests + 4 subtests**.
 - Trading is still default-denied. A seller may prepare a private draft for a disabled category but cannot submit it.
 - [Workflow and acceptance guide](25-seller-listing-workflow.md) describes the exact current scope and supported attributes.
 
