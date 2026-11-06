@@ -18,7 +18,7 @@ from .serializers import (
     ListingPhotoUploadSerializer, MediaAssetSerializer,
     MediaReviewSerializer, SellerEvidenceUploadSerializer,
 )
-from .services import create_listing_photo, create_seller_evidence, review_listing_photo
+from .services import create_listing_photo, create_seller_evidence, remove_draft_photo, review_listing_photo
 from .storage import read_object
 
 
@@ -60,7 +60,7 @@ class MyMediaView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def get(self, request):
-        assets = MediaAsset.objects.filter(owner=request.user)[:100]
+        assets = MediaAsset.objects.filter(owner=request.user).exclude(state=MediaAsset.State.REMOVED)[:100]
         return Response(MediaAssetSerializer(assets, many=True).data)
 
 
@@ -75,6 +75,8 @@ class MediaFileView(APIView):
                 "listing__seller__seller_profile", "listing__animal__species"
             ), pk=asset_id,
         )
+        if asset.state == MediaAsset.State.REMOVED:
+            raise Http404()
         user = request.user
         owner = user.is_authenticated and user.is_active and asset.owner_id == user.pk
         if asset.kind == MediaAsset.Kind.SELLER_EVIDENCE:
@@ -132,3 +134,13 @@ class MediaReviewView(APIView):
             reason=serializer.validated_data["reason"],
         )
         return Response(MediaAssetSerializer(reviewed).data)
+
+
+class DraftPhotoDeleteView(APIView):
+    permission_classes = (IsAuthenticated,)
+    throttle_classes = (ScopedRateThrottle,)
+    throttle_scope = "media_upload"
+
+    def delete(self, request, asset_id):
+        remove_draft_photo(asset_id=asset_id, actor=request.user)
+        return Response(status=status.HTTP_204_NO_CONTENT)

@@ -14,6 +14,7 @@ class MediaAsset(models.Model):
         PENDING = "pending", "Awaiting manual review"
         APPROVED = "approved", "Approved for public listing"
         REJECTED = "rejected", "Rejected"
+        REMOVED = "removed", "Removed by seller"
 
     class EvidenceType(models.TextChoices):
         IDENTITY = "identity", "Identity evidence"
