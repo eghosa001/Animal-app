@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "modules.accounts",
     "modules.catalog",
     "modules.listings",
+    "modules.media.apps.MediaConfig",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -115,3 +116,15 @@ if not DEBUG:
     CSRF_TRUSTED_ORIGINS = [v.strip() for v in os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if v.strip()]
 # No live commerce integration exists during M0.
 PAYMENTS_ENABLED = False
+
+# All uploaded images are stored in PRIVATE buckets. Filesystem is debug-only.
+MEDIA_STORAGE_BACKEND = os.getenv("MEDIA_STORAGE_BACKEND", "local" if DEBUG else "r2")
+PRIVATE_MEDIA_ROOT = Path(os.getenv("PRIVATE_MEDIA_ROOT", str(BASE_DIR.parent / ".anima-private-media")))
+R2_ENDPOINT_URL = os.getenv("R2_ENDPOINT_URL", "")
+R2_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID", "")
+R2_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY", "")
+R2_BUCKET_PHOTOS = os.getenv("R2_BUCKET_PHOTOS", "")
+R2_BUCKET_EVIDENCE = os.getenv("R2_BUCKET_EVIDENCE", "")
+FILE_UPLOAD_MAX_MEMORY_SIZE = 2 * 1024 * 1024
+DATA_UPLOAD_MAX_MEMORY_SIZE = 1 * 1024 * 1024
+REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["media_upload"] = "20/hour"

@@ -15,5 +15,6 @@ urlpatterns = [
     path("health/ready", ready, name="health-ready"),
     path("api/v1/auth/", include("modules.accounts.urls")),
     path("api/v1/catalog/", include("modules.catalog.urls")),
+    path("api/v1/media/", include("modules.media.urls")),
     path("api/v1/", include(router.urls)),
 ]
