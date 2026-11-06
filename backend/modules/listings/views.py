@@ -15,15 +15,16 @@ from .services import submit_listing
 
 class ListingViewSet(
     mixins.CreateModelMixin,
+    mixins.UpdateModelMixin,
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
     viewsets.GenericViewSet,
 ):
-    http_method_names = ("get", "post", "head", "options")
+    http_method_names = ("get", "post", "patch", "head", "options")
 
     def get_queryset(self):
         queryset = Listing.objects.select_related("animal__species", "seller")
-        if self.action in ("mine", "submit"):
+        if self.action in ("mine", "submit", "partial_update"):
             return queryset.filter(seller=self.request.user) if self.request.user.is_authenticated else queryset.none()
         return queryset.filter(
             status=Listing.Status.ACTIVE,
@@ -33,7 +34,7 @@ class ListingViewSet(
         )
 
     def get_serializer_class(self):
-        return ListingCreateSerializer if self.action == "create" else ListingReadSerializer
+        return ListingCreateSerializer if self.action in ("create", "partial_update") else ListingReadSerializer
 
     def get_permissions(self):
         return [AllowAny()] if self.action in ("list", "retrieve") else [IsAuthenticated()]
@@ -45,8 +46,21 @@ class ListingViewSet(
         # Creation accepts nested write-only fields; return the public read schema instead.
         return Response(ListingReadSerializer(serializer.instance).data, status=status.HTTP_201_CREATED)
 
+    def partial_update(self, request, *args, **kwargs):
+        listing = get_object_or_404(
+            self.get_queryset().filter(status=Listing.Status.DRAFT),
+            pk=kwargs.get("pk"),
+        )
+        serializer = ListingCreateSerializer(
+            listing, data=request.data, partial=True,
+            context=self.get_serializer_context(),
+        )
+        serializer.is_valid(raise_exception=True)
+        updated = serializer.save()
+        return Response(ListingReadSerializer(updated).data, status=status.HTTP_200_OK)
+
     def perform_create(self, serializer):
-        if not self.request.user.is_email_verified:
+        if not self.request.user.is_active or not self.request.user.is_email_verified:
             raise PermissionDenied("Verify your email before creating a listing")
         seller = getattr(self.request.user, "seller_profile", None)
         if seller is None or seller.status not in (SellerProfile.Status.PENDING, SellerProfile.Status.APPROVED):

@@ -12,12 +12,14 @@ def validate_trade_permissions(listing):
     seller = getattr(listing.seller, "seller_profile", None)
     if seller is None or seller.status != SellerProfile.Status.APPROVED:
         raise ValidationError({"seller": ["Seller must be approved before publication"]})
-    if not listing.seller.is_email_verified:
+    if not listing.seller.is_active or not listing.seller.is_email_verified:
         raise ValidationError({"seller": ["Seller email verification is required"]})
     if not listing.animal.species.trade_enabled:
         raise ValidationError({"species": ["This species is not enabled for trading"]})
     if listing.animal.owner_id != listing.seller_id:
         raise ValidationError({"animal": ["Animal owner must match listing seller"]})
+    if not seller.adult_attested:
+        raise ValidationError({"seller": ["The seller must attest to adult eligibility"]})
 
 
 @transaction.atomic
@@ -28,6 +30,14 @@ def submit_listing(listing_id, actor):
     if listing.status != Listing.Status.DRAFT:
         raise ValidationError({"status": ["Only draft listings can be submitted"]})
     validate_trade_permissions(listing)
+    from modules.media.models import MediaAsset
+
+    if not MediaAsset.objects.filter(
+        listing=listing,
+        kind=MediaAsset.Kind.LISTING_PHOTO,
+        state__in=(MediaAsset.State.PENDING, MediaAsset.State.APPROVED),
+    ).exists():
+        raise ValidationError({"photos": ["Upload at least one animal photograph before submission"]})
     listing.status = Listing.Status.PENDING
     listing.submitted_at = timezone.now()
     listing.save(update_fields=["status", "submitted_at"])
@@ -45,6 +55,12 @@ def approve_listing(listing_id, actor):
     if listing.status != Listing.Status.PENDING:
         raise ValidationError({"status": ["Only submitted listings can be approved"]})
     validate_trade_permissions(listing)
+    from modules.media.models import MediaAsset
+
+    if not MediaAsset.objects.filter(
+        listing=listing, kind=MediaAsset.Kind.LISTING_PHOTO, state=MediaAsset.State.APPROVED
+    ).exists():
+        raise ValidationError({"photos": ["A reviewed and approved animal photograph is required"]})
     listing.status = Listing.Status.ACTIVE
     listing.approved_at = timezone.now()
     listing.save(update_fields=["status", "approved_at"])
