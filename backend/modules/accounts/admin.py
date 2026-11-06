@@ -5,7 +5,6 @@ from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.html import format_html
-from django.utils import timezone
 
 from .forms import SellerReviewForm
 from .models import SellerProfile, SellerReviewEvent, User
