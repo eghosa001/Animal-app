@@ -49,7 +49,7 @@ class ListingCreateSerializer(serializers.Serializer):
     animal_name = serializers.CharField(min_length=2, max_length=120)
     breed_label = serializers.CharField(max_length=120, required=False, allow_blank=True)
     sex = serializers.ChoiceField(choices=Animal.Sex.choices, default=Animal.Sex.UNKNOWN)
-    estimated_age_months = serializers.IntegerField(required=False, min_value=0, max_value=1200)
+    estimated_age_months = serializers.IntegerField(required=False, allow_null=True, min_value=0, max_value=1200)
 
     @transaction.atomic
     def create(self, validated_data):
@@ -92,7 +92,7 @@ class ListingCreateSerializer(serializers.Serializer):
         # Require selecting the correct species before starting the photo gallery.
         if new_species.pk != animal.species_id and MediaAsset.objects.filter(
             listing=listing, kind=MediaAsset.Kind.LISTING_PHOTO,
-        ).exists():
+        ).exclude(state=MediaAsset.State.REMOVED).exists():
             raise ValidationError({
                 "species_id": ["Remove or resolve existing photos before changing animal species"]
             })

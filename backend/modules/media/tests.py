@@ -4,6 +4,7 @@ import tempfile
 from unittest.mock import MagicMock, patch
 
 from django.contrib.auth.models import Permission
+from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
 from django.utils import timezone
@@ -32,6 +33,9 @@ def photo_file(*, format="PNG", declared=None, size=(32, 24)):
 @override_settings(DEBUG=True, MEDIA_STORAGE_BACKEND="local")
 class PrivateMediaApiTests(APITestCase):
     def setUp(self):
+        # DRF's anonymous/user throttles use a shared cache across test cases.
+        # Reset between cases to test object access, not unrelated rate-limit history.
+        cache.clear()
         self.tempdir = tempfile.TemporaryDirectory()
         self.addCleanup(self.tempdir.cleanup)
         self.root_override = override_settings(PRIVATE_MEDIA_ROOT=self.tempdir.name)
@@ -310,6 +314,22 @@ class PrivateMediaApiTests(APITestCase):
         # authenticated, unrelated user to assert object-level access.
         self.client.force_authenticate(user=self.buyer)
         self.assertEqual(self.client.get(uploaded.data["file_url"]).status_code, 404)
+
+    def test_full_draft_gallery_can_replace_removed_photo(self):
+        for _ in range(8):
+            self.assertEqual(self.upload_photo().status_code, 201)
+        ninth = self.upload_photo()
+        self.assertEqual(ninth.status_code, 400)
+        asset = MediaAsset.objects.filter(
+            listing=self.listing, kind=MediaAsset.Kind.LISTING_PHOTO
+        ).first()
+        self.assertEqual(
+            self.client.delete(f"/api/v1/media/{asset.pk}/").status_code, 204
+        )
+        self.assertEqual(self.upload_photo().status_code, 201)
+        self.assertEqual(MediaAsset.objects.filter(
+            listing=self.listing
+        ).exclude(state=MediaAsset.State.REMOVED).count(), 8)
 
     def test_other_account_cannot_remove_photo_and_submitted_photo_is_locked(self):
         uploaded = self.upload_photo()

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'core/api_client.dart';
 import 'seller_media_page.dart';
+import 'seller_listings_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -57,10 +58,9 @@ class _AppShellState extends State<AppShell> {
       case 1:
         body = MarketplacePage(api: _api);
       case 2:
-        body = const UpcomingPage(
-          icon: Icons.add_photo_alternate_outlined,
-          title: 'Create animal content',
-          message: 'Video posting, images, and verified animal listings are in the next implementation milestones.',
+        body = SellerListingsPage(
+          api: _api,
+          onOpenAccount: () => setState(() => _selected = 4),
         );
       case 3:
         body = const UpcomingPage(
@@ -427,7 +427,16 @@ class _AccountPageState extends State<AccountPage> {
               child: const Text('Apply to become a seller (adults only)'),
             ),
           ],
-          if (profile['seller_status'] == 'pending' || profile['seller_status'] == 'approved')
+          if (profile['seller_status'] == 'pending' || profile['seller_status'] == 'approved') ...[
+            FilledButton.icon(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (context) => SellerListingsPage(api: widget.api),
+                ),
+              ),
+              icon: const Icon(Icons.pets_outlined),
+              label: const Text('Manage animal listings'),
+            ),
             OutlinedButton.icon(
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
@@ -437,6 +446,7 @@ class _AccountPageState extends State<AccountPage> {
               icon: const Icon(Icons.cloud_upload_outlined),
               label: const Text('Upload animal photos or verification'),
             ),
+          ],
           OutlinedButton(
             onPressed: _busy ? null : () => _act(() async {
               await widget.api.logout();

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -8,9 +9,14 @@ import 'core/api_client.dart';
 /// A deliberately narrow workflow: draft listing photos and private seller evidence.
 /// It does not imply a verified identity, approved animal, or active sale.
 class SellerMediaPage extends StatefulWidget {
-  const SellerMediaPage({required this.api, super.key});
+  const SellerMediaPage({
+    required this.api,
+    this.initialListingId,
+    super.key,
+  });
 
   final ApiClient api;
+  final String? initialListingId;
 
   @override
   State<SellerMediaPage> createState() => _SellerMediaPageState();
@@ -20,6 +26,7 @@ class _SellerMediaPageState extends State<SellerMediaPage> {
   final ImagePicker _picker = ImagePicker();
   List<Map<String, dynamic>> _drafts = [];
   List<Map<String, dynamic>> _uploaded = [];
+  final Map<String, Future<Uint8List>> _thumbnails = {};
   String _mode = 'listing_photo';
   String _evidenceType = 'identity';
   String? _listingId;
@@ -34,6 +41,7 @@ class _SellerMediaPageState extends State<SellerMediaPage> {
   @override
   void initState() {
     super.initState();
+    _listingId = widget.initialListingId;
     _load();
     _recoverLostAndroidPhoto();
   }
@@ -64,6 +72,8 @@ class _SellerMediaPageState extends State<SellerMediaPage> {
       setState(() {
         _drafts = drafts;
         _uploaded = assets;
+        _thumbnails.clear();
+        _error = false;
         if (!_drafts.any((item) => item['id'] == _listingId)) {
           _listingId = null;
         }
@@ -220,9 +230,111 @@ class _SellerMediaPageState extends State<SellerMediaPage> {
     }
   }
 
+  Future<Uint8List> _thumbnailData(String path) {
+    return _thumbnails.putIfAbsent(
+      path, () => widget.api.readMyPhoto(path),
+    );
+  }
+
+  Widget _photoPreview(Map<String, dynamic> asset) {
+    final urlPath = asset['file_url']?.toString() ?? '';
+    return SizedBox(
+      width: 56,
+      height: 56,
+      child: FutureBuilder<Uint8List>(
+        future: _thumbnailData(urlPath),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Icon(Icons.image_outlined, size: 32);
+          }
+          return ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.memory(
+              snapshot.data!,
+              fit: BoxFit.cover,
+              width: 56,
+              height: 56,
+              errorBuilder: (context, error, stackTrace) =>
+                  const Icon(Icons.broken_image_outlined),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _removePhoto(Map<String, dynamic> asset) async {
+    final id = asset['id']?.toString();
+    if (id == null || _busy) {
+      return;
+    }
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Remove draft photo?'),
+        content: const Text(
+          'This removes the photo from your draft gallery and prevents '
+          'public access. The private copy remains temporarily retained '
+          'for moderation records until the approved deletion process runs.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Remove photo'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true || !mounted) {
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = false;
+      _message = '';
+    });
+    try {
+      await widget.api.removeDraftPhoto(id);
+      if (!mounted) {
+        return;
+      }
+      setState(() => _message = 'Photo removed from the draft gallery.');
+      await _load();
+    } on ApiFailure catch (error) {
+      if (mounted) {
+        setState(() {
+          _error = true;
+          _message = error.message;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _error = true;
+          _message = 'Could not remove photo. Check your connection and retry.';
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final evidence = _mode == 'seller_evidence';
+    final visibleAssets = _uploaded.where((asset) {
+      if (evidence) {
+        return asset['kind'] == 'seller_evidence';
+      }
+      return asset['kind'] == 'listing_photo' &&
+          asset['listing']?.toString() == _listingId;
+    }).toList();
     return Scaffold(
       appBar: AppBar(title: const Text('Seller media')),
       body: SafeArea(
@@ -249,7 +361,7 @@ class _SellerMediaPageState extends State<SellerMediaPage> {
               if (_drafts.isEmpty)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Text('You have no draft listings yet. Draft creation is being developed separately; photos can be attached once a draft exists.'),
+                  child: Text('You have no draft listings yet. Create a listing from the Create tab, then return to attach photos.'),
                 )
               else
                 DropdownButton<String>(
@@ -262,7 +374,10 @@ class _SellerMediaPageState extends State<SellerMediaPage> {
                       child: Text(item['title']?.toString() ?? 'Untitled draft'),
                     );
                   }).toList(),
-                  onChanged: _busy ? null : (value) => setState(() => _listingId = value),
+                  onChanged: _busy ? null : (value) => setState(() {
+                     _listingId = value;
+                     _selectedImage = null;
+                   }),
                 ),
               const Text('JPEG/PNG only, maximum 8 MB. A moderator must approve the photo before the listing can show it publicly.'),
             ] else ...[
@@ -325,20 +440,35 @@ class _SellerMediaPageState extends State<SellerMediaPage> {
               ),
             ],
             const SizedBox(height: 25),
-            Text('Your uploaded files', style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              evidence ? 'Private verification evidence' : 'Draft photo gallery',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 8),
-            if (_uploaded.isEmpty && !_loading)
-              const Text('No uploaded images yet.')
+            if (visibleAssets.isEmpty && !_loading)
+              Text(evidence
+                  ? 'No private verification images uploaded yet.'
+                  : _listingId == null
+                      ? 'Choose a draft to see its photos.'
+                      : 'No photos on this draft yet.')
             else
-              for (final asset in _uploaded)
+              for (final asset in visibleAssets)
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: Icon(asset['kind'] == 'seller_evidence' ? Icons.lock_outline : Icons.image_outlined),
-                  title: Text(asset['kind'] == 'seller_evidence'
+                  leading: evidence
+                      ? const Icon(Icons.lock_outline)
+                      : _photoPreview(asset),
+                  title: Text(evidence
                       ? 'Private ${asset['evidence_type'] ?? 'verification'} image'
-                      : 'Animal listing photograph'),
-                  subtitle: Text('Status: ${asset['state'] ?? 'pending review'}'),
-                  trailing: const Icon(Icons.shield_outlined),
+                      : 'Animal photograph'),
+                  subtitle: Text('Review status: ${asset['state'] ?? 'pending'}'),
+                  trailing: evidence
+                      ? const Icon(Icons.shield_outlined)
+                      : IconButton(
+                          tooltip: 'Remove photo',
+                          onPressed: _busy ? null : () => _removePhoto(asset),
+                          icon: const Icon(Icons.delete_outline),
+                        ),
                 ),
             OutlinedButton(
               onPressed: _busy || _loading ? null : _load,

@@ -121,6 +121,17 @@ class ListingApiTests(APITestCase):
         self.assertEqual(self.client.get("/api/v1/listings/").data["count"], 0)
         self.assertEqual(self.client.get(url).status_code, 404)  # Not public.
 
+    def test_age_estimate_can_be_cleared_on_draft_edit(self):
+        draft = self.client.post("/api/v1/listings/", self.payload, format="json")
+        url = f"/api/v1/listings/{draft.data['id']}/"
+        updated = self.client.patch(
+            url, {"estimated_age_months": None}, format="json"
+        )
+        self.assertEqual(updated.status_code, 200, updated.data)
+        self.assertIsNone(updated.data["estimated_age_months"])
+        animal = Animal.objects.get(listing__pk=draft.data["id"])
+        self.assertIsNone(animal.estimated_age_months)
+
     def test_invalid_partial_patch_rolls_back_entire_edit(self):
         draft = self.client.post("/api/v1/listings/", self.payload, format="json")
         url = f"/api/v1/listings/{draft.data['id']}/"
@@ -200,6 +211,26 @@ class ListingApiTests(APITestCase):
         self.assertEqual(response.status_code, 400)
         animal.refresh_from_db()
         self.assertEqual(animal.species_id, self.species.pk)
+
+    def test_species_can_change_after_all_draft_photos_are_removed(self):
+        created = self.client.post("/api/v1/listings/", self.payload, format="json")
+        listing = Listing.objects.get(pk=created.data["id"])
+        alternative = Species.objects.create(
+            name="Rabbits", slug="rabbit-listing",
+            category=Species.Category.COMPANION,
+        )
+        MediaAsset.objects.create(
+            owner=self.user, listing=listing, kind=MediaAsset.Kind.LISTING_PHOTO,
+            state=MediaAsset.State.REMOVED, storage_key="listing-photos/removed.jpg",
+            size_bytes=100, width=32, height=24, sha256="d" * 64,
+        )
+        changed = self.client.patch(
+            f"/api/v1/listings/{listing.pk}/",
+            {"species_id": alternative.pk},
+            format="json",
+        )
+        self.assertEqual(changed.status_code, 200, changed.data)
+        self.assertEqual(changed.data["species"]["name"], "Rabbits")
 
     def test_suspended_seller_cannot_edit_existing_draft(self):
         created = self.client.post("/api/v1/listings/", self.payload, format="json")
