@@ -233,7 +233,7 @@ class ApiClient {
     if (evidence && (evidenceType == null || !consent)) {
       throw const ApiFailure('Evidence category and consent are required');
     }
-    if (!evidence && (listingId?.isEmpty ?? true)) {
+    if (!evidence && (listingId.isEmpty)) {
       throw const ApiFailure('Select an animal listing');
     }
     final endpoint = evidence
@@ -247,7 +247,7 @@ class ApiClient {
         request.fields['evidence_type'] = evidenceType!;
         request.fields['consent'] = 'true';
       } else {
-        request.fields['listing_id'] = listingId!;
+        request.fields['listing_id'] = listingId;
       }
       request.files.add(await http.MultipartFile.fromPath(
         'file',
