@@ -27,6 +27,8 @@ Cross-platform (Android + iOS) animal-only social and marketplace platform with 
 | [UX and design system](docs/15-ux-and-design-system.md) | Screens, interactions, accessibility and mobile quality |
 | [Open-source evaluation](docs/16-open-source-evaluation.md) | Public GitHub libraries, build-vs-buy, licensing |
 | [Infrastructure and deployment](docs/17-infrastructure-and-deployment.md) | Environments, release, secrets, recovery |
+| [Android CI reliability](docs/19-android-ci-reliability.md) | Pinned Flutter/NDK, retry and failure runbook |
+| [Seller review runbook](docs/20-seller-review-runbook.md) | Staff permissions, evidence case IDs, audit and suspension controls |
 
 ## Intended repository layout
 
