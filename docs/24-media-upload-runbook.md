@@ -1,6 +1,6 @@
 # Private animal-photo and seller-evidence upload runbook
 
-**Implemented code:** Backend PR #14 and Flutter PR #15, 2026-11-06. **Deployment:** automated local/CI verification; R2 real-account integration, device/iOS acceptance and production privacy/legal signoff pending.
+**Implemented code:** Backend PRs #14/#18 and Flutter PRs #15/#19, 2026-11-06. **Deployment:** automated local/CI verification; R2 real-account integration, device/iOS acceptance and production privacy/legal signoff pending.
 
 ## Purpose and explicit boundaries
 
@@ -25,6 +25,7 @@ All paths are relative to the backend host; never send object-store credentials 
 | `/api/v1/media/mine/` | GET | Authenticated owner | List own asset IDs/metadata, **never** storage keys |
 | `/api/v1/media/{asset_id}/file/` | GET | Owner, entitled staff, or public only if approved active listing photo | Private authenticated image streaming |
 | `/api/v1/media/{asset_id}/review/` | POST JSON | Staff with `animal_media.review_mediaasset` | Approve/reject photo with a 20–500-character reason |
+| `/api/v1/media/{asset_id}/` | DELETE | Owner, own DRAFT photo only | Soft-remove from gallery, revoke access and record review event. Object bytes retained until approved deletion/retention workflow |
 
 All uploads are subject to an initial per-user API throttle. For production, enforce rate limits with Redis/shared cache and API gateway limits, not a local process-only cache.
 
@@ -107,7 +108,7 @@ Official docs:
 
 PR #14 CI runs PostgreSQL tests for decoding and metadata removal, fake MIME, size limits, cross-seller rejection, seller evidence/private reviewer separation, per-object audit, moderator approval and public-status rechecks, local-storage production fail-closed and mock R2 bucket routing. This verifies code behaviours **without** asserting real R2 integration. See the PR and CI log for precise test counts.
 
-**Not finished for production:** real R2 staging credentials; virus scanning and secure PDF support; per-country data processing legal approval; retention/erasure automation and evidence consent text; media deletion/replacement; Flutter creation/editing of new listing drafts, full photo gallery management, and end-to-end Android/iOS device testing; CDN-ready public image derivative strategy. These must be completed in separate, verified tasks before declaring M1 complete.
+**Not finished for production:** real R2 staging credentials; virus scanning and secure PDF support; per-country data processing legal approval; retention/erasure automation and evidence consent text; media deletion/replacement; Flutter full-health listing records, real-photo end-to-end Android/iOS device testing and evidence retention/erasure; CDN-ready public image derivative strategy. These must be completed in separate, verified tasks before declaring M1 complete.
 
 ## Verified mobile integration (PR #15)
 
@@ -116,3 +117,7 @@ The Flutter **Profile → Upload animal photos or verification** screen supports
 The old artifact display name `anima-m0-debug-apk` is inherited from the existing workflow; the referenced CI run includes the M1 seller upload interface. The artifact is a **development APK**, not a production-ready signed release.
 
 **Important prerequisites for real end-to-end testing:** a running local/staging API, an email-verified seller who has submitted an application, and an existing draft listing for animal photos. The app does not create draft listings yet; that is the next separately testable M1 task. Identity-image uploads can be started from the applicant's profile without a draft. On real Android use a test API reachable by the phone (USB `adb reverse` for local) or HTTPS staging. macOS/Xcode iOS testing and actual Cloudflare R2 integration have not been performed.
+
+## Seller gallery update (PRs #18 and #19)
+
+The app can now create/edit individual-animal draft listings and manage their gallery without manually creating records through the API. Seller draft photo removal is owner-only, works only while the listing remains DRAFT, immediately revokes reads, and records an audit event. It does **not** physically erase the object and is **not** the private-evidence erasure workflow. The gallery cap of eight counts only non-removed photos; all other authorization and moderation checks remain server-enforced. See [listing workflow](25-seller-listing-workflow.md).
