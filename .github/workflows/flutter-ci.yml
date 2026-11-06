@@ -21,6 +21,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: '3.47.9'
           cache: true
       - name: Generate native runner scaffold
         run: |
@@ -48,11 +49,40 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: '3.47.9'
           cache: true
       - name: Generate Android native runner
         run: |
           cd apps/mobile
           flutter create --platforms=android,ios --project-name anima_app --org com.anima .
+      - name: Install Android NDK with retry (network-safe)
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdk="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          ndk="28.2.13676358"
+          sdkmanager="$sdk/cmdline-tools/latest/bin/sdkmanager"
+          if [[ ! -x "$sdkmanager" ]]; then
+            echo "Android SDK manager missing at $sdkmanager"
+            exit 1
+          fi
+          for attempt in 1 2 3; do
+            if [[ -f "$sdk/ndk/$ndk/source.properties" ]]; then
+              echo "Android NDK $ndk installed and verified"
+              exit 0
+            fi
+            rm -rf "$sdk/ndk/$ndk"
+            echo "Installing Android NDK $ndk (attempt $attempt/3)"
+            if "$sdkmanager" --sdk_root="$sdk" --install "ndk;$ndk"; then
+              if [[ -f "$sdk/ndk/$ndk/source.properties" ]]; then
+                echo "Android NDK $ndk installed and verified"
+                exit 0
+              fi
+            fi
+            sleep $((attempt * 10))
+          done
+          echo "Unable to install Android NDK $ndk after three attempts"
+          exit 1
       - name: Compile installable test APK
         run: cd apps/mobile && flutter build apk --debug --dart-define=API_BASE_URL=http://127.0.0.1:8000
       - name: Upload APK for device testing
