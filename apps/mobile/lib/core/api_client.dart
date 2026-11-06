@@ -233,7 +233,7 @@ class ApiClient {
     if (evidence && (evidenceType == null || !consent)) {
       throw const ApiFailure('Evidence category and consent are required');
     }
-    if (!evidence && listingId.isEmpty) {
+    if (!evidence && (listingId?.isEmpty ?? true)) {
       throw const ApiFailure('Select an animal listing');
     }
     final endpoint = evidence
