@@ -32,6 +32,7 @@ Cross-platform (Android + iOS) animal-only social and marketplace platform with 
 | [Feature completeness audit](docs/21-feature-completeness-audit.md) | Current implemented vs planned features, P0/P1/P2 gaps, journey acceptance |
 | [Animal identity and inventory](docs/22-animal-identity-and-inventory.md) | Individual animals, litters, lots, welfare, health evidence and reservation safety |
 | [Definition of done](docs/23-definition-of-done-and-acceptance.md) | Per-task completion, regression testing and launch gates |
+| [Private media setup and threat controls](docs/24-media-upload-runbook.md) | Tested backend private photos/evidence API, staff review, local/R2 configuration |
 
 ## Feature-readiness notice
 

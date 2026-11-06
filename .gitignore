@@ -29,3 +29,7 @@ htmlcov/
 .vscode/
 *.log
 *.sqlite3
+
+# Private media must never be versioned
+.anima-private-media/
+backend/private_uploads/

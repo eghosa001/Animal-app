@@ -98,6 +98,11 @@ class SellerProfileAdmin(admin.ModelAdmin):
                 )
                 return redirect(reverse("admin:accounts_sellerprofile_changelist"))
 
+        from modules.media.models import MediaAsset
+
+        evidence_files = MediaAsset.objects.filter(
+            owner=seller.user, kind=MediaAsset.Kind.SELLER_EVIDENCE
+        ).order_by("-uploaded_at")[:20]
         context = {
             **self.admin_site.each_context(request),
             "title": "Review seller application",
@@ -105,6 +110,7 @@ class SellerProfileAdmin(admin.ModelAdmin):
             "seller": seller,
             "form": form,
             "review_history": seller.review_events.select_related("reviewer").all()[:20],
+            "evidence_files": evidence_files,
         }
         return TemplateResponse(request, "admin/accounts/seller_review.html", context)
 

@@ -15,13 +15,26 @@ class ListingReadSerializer(serializers.ModelSerializer):
     sex = serializers.CharField(source="animal.sex", read_only=True)
     estimated_age_months = serializers.IntegerField(source="animal.estimated_age_months", read_only=True)
     seller_name = serializers.CharField(source="seller.display_name", read_only=True)
+    photo_urls = serializers.SerializerMethodField()
+
+    def get_photo_urls(self, obj):
+        from django.urls import reverse
+        from modules.media.models import MediaAsset
+
+        return [
+            reverse("media-file", kwargs={"asset_id": asset.pk})
+            for asset in obj.media_assets.filter(
+                kind=MediaAsset.Kind.LISTING_PHOTO, state=MediaAsset.State.APPROVED,
+            ).order_by("uploaded_at")[:8]
+        ]
+
 
     class Meta:
         model = Listing
         fields = (
             "id", "title", "description", "price_minor", "currency", "region",
             "status", "species", "animal_name", "breed_label", "sex",
-            "estimated_age_months", "seller_name", "created_at",
+            "estimated_age_months", "seller_name", "created_at", "photo_urls",
         )
         read_only_fields = fields
 

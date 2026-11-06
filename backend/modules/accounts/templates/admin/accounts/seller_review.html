@@ -16,6 +16,18 @@
     <input type="submit" value="Record review decision" class="default">
   </form>
 
+  <h2>Private verification evidence</h2>
+  {% if evidence_files %}
+  <ul>
+    {% for item in evidence_files %}
+      <li>{{ item.get_evidence_type_display }} · uploaded {{ item.uploaded_at }} ·
+        <a href="{% url 'media-file' asset_id=item.id %}">Open private evidence image</a>
+      </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>No verification images uploaded. Approval still requires a documented evidence review.</p>
+  {% endif %}
   <h2>Recent review history</h2>
   {% if review_history %}
   <table>

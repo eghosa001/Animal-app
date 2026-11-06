@@ -1,0 +1,18 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<section style="max-width: 820px;">
+  <h2>Listing photo review</h2>
+  <p>Uploader: {{ asset.owner.email }} | Listing: {{ asset.listing.title }} |
+    Current photo state: <strong>{{ asset.get_state_display }}</strong></p>
+  <p>This image is never public until an authorized reviewer approves it and the associated
+    seller and listing satisfy current trade restrictions. Reject any prohibited or unsafe content.</p>
+  <img src="{% url 'media-file' asset_id=asset.id %}" alt="Submitted animal photograph"
+       style="max-width: 100%; max-height: 420px; object-fit: contain;" />
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="default">Record decision</button>
+  </form>
+  <p><a href="{% url 'admin:animal_media_mediaasset_changelist' %}">Return to media queue</a></p>
+</section>
+{% endblock %}
