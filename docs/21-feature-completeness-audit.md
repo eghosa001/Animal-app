@@ -140,3 +140,14 @@ Existing plan = credible foundation; updated requirements = more complete high-q
 6. Operations, Android/iOS release gates and controlled beta.
 
 Do not change to a microservice architecture or purchase extra tools merely to give the impression of sophistication. Performance, safety, verifiable operations, and end-to-end user experience determine quality.
+
+## 8. Granular backlog coverage
+
+The existing milestone epics remain tracked in GitHub issues [#3](https://github.com/eghosa001/Animal-app/issues/3) (seller/listing), [#4](https://github.com/eghosa001/Animal-app/issues/4) (chat), [#5](https://github.com/eghosa001/Animal-app/issues/5) (social), [#6](https://github.com/eghosa001/Animal-app/issues/6) (protected commerce) and [#7](https://github.com/eghosa001/Animal-app/issues/7) (release).
+
+Three release-critical gaps uncovered here have separate issues so they do not disappear within large epics:
+- [#10 Account security and recovery](https://github.com/eghosa001/Animal-app/issues/10): AUTH-03/AUTH-04/PRIV-02.
+- [#11 Species and animal inventory correctness](https://github.com/eghosa001/Animal-app/issues/11): ANIMAL-02 through ANIMAL-05, LIST-05 and ORDER-02.
+- [#12 Buyer support, authentic reviews and welfare escalation](https://github.com/eghosa001/Animal-app/issues/12): SUPPORT-01, REV-01, FULFILL-02 and DISPUTE-02.
+
+These issues are **open planning/work items**, not completed code. Each must be decomposed into small, independently tested pull requests before the relevant P0 release gate can close.
