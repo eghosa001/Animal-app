@@ -6,9 +6,9 @@ Updated 2026-11-05. Tracks actual implemented code, not aspirations.
 - PostgreSQL-first runtime with local SQLite fallback only when DEBUG; Docker Compose Postgres/Redis.
 - Custom email-first account model, password validators, JWT access/rotating refresh tokens, refresh-token logout.
 - Verification code sent via Django mail backend (local console in debug); hashed token stored, 24-hour expiration.
-- Seller application creates PENDING; staff checks and approves manually in admin. No KYC integrations yet.
+- Seller application creates PENDING; audited staff seller-review screen requires dedicated permission, reason, case reference and evidence-review confirmation. Invalid/self reviews blocked; no KYC integrations yet.
 - Species catalog model and safe seed command; trading OFF by default for every species.
-- Animal + Listing models; seller drafts, seller-only listing view, guarded submission, staff-only publication, public active listing API.
+- Animal + Listing models; seller drafts, seller-only listing view, guarded submission, staff-only publication, public active listing API. Seller suspension removes active listings with audit and public queries dynamically exclude unapproved/inactive sellers and restricted species.
 - Readiness/liveness checks, backend API tests and GitHub Actions.
 - Flutter mobile source with navigation and API-connected basic marketplace/account flows, explicit adult seller attestation, email verification for signed-in users; native Android/iOS runner templates generated via flutter create bootstrap, not committed platform runners.
 - CI compiles a debug Android APK and offers a 7-day workflow artifact for device smoke testing.
@@ -26,6 +26,12 @@ Updated 2026-11-05. Tracks actual implemented code, not aspirations.
 - Flutter CI generated Android/iOS runner scaffolds and passed analysis/widget tests. Android debug APK build passed and uploaded a seven-day workflow artifact on 2026-11-05; see https://github.com/eghosa001/Animal-app/actions/runs/42107300025. An actual iOS archive still requires macOS/Xcode and credentials.
 - Financial go-live requires written partner/legal signoff and a separately implemented audit-tested commerce module.
 - Documentation is planning source of truth; feature status is this file and GitHub PR/CI results.
+
+## Verified incremental M1 progress (2026-11-06)
+- [PR #8](https://github.com/eghosa001/Animal-app/pull/8): pinned Flutter/NDK and robust NDK-install retry. Android debug build and uploaded APK verified on [CI run](https://github.com/eghosa001/Animal-app/actions/runs/42163692011).
+- [PR #9](https://github.com/eghosa001/Animal-app/pull/9): manual audited seller approval, explicit permission, locked transitions, suspended-listing removal and staff UI. Backend PostgreSQL CI passed **19 tests + 4 subtests**, Django migration checks, and lint on [CI run](https://github.com/eghosa001/Animal-app/actions/runs/42164908370).
+- Manual evidence review requires secure **external** case reference, not raw ID documents. This is NOT third-party automated KYC or completed M1.
+- Seller media uploads, identity-evidence storage, detailed verification requirements, listing editing UI and Android/iOS real-device end-to-end checks remain pending.
 
 ## Next milestone M1
 Complete secure email delivery service, KYC workflow and staff evidence storage, animal health/photo uploads, seller listing management UI, species approval signoff and real-device end-to-end testing. Do not represent the app as launch-ready.
