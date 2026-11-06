@@ -66,6 +66,9 @@ void main() {
     expect(find.text('Create animal listing'), findsOneWidget);
     expect(find.text('Individual animal'), findsOneWidget);
     expect(find.text('Animal category'), findsOneWidget);
+    // The form is intentionally scrollable on small phones; the action is below
+    // the fold when optional animal disclosures are visible.
+    await tester.scrollUntilVisible(find.text('Save private draft'), 200);
     expect(find.text('Save private draft'), findsOneWidget);
     expect(find.text('Save and manage photos'), findsOneWidget);
     api.dispose();
