@@ -1,6 +1,6 @@
 # Animal Platform
 
-**Status:** Active development. M0 and selected M1 modules (audited seller review, private media, and Flutter draft animal listings) have merged with automated tests. No production deployment, payment processor, escrow service, or live cloud infrastructure has been provisioned.
+**Status:** Active development. M0 and selected M1 modules (audited seller review, private media, Flutter animal draft listings and email account recovery) have merged with automated tests. No production deployment, payment processor, escrow service, or live cloud infrastructure has been provisioned.
 
 Cross-platform (Android + iOS) animal-only social and marketplace platform with verified seller profiles, animal listings, short video and photo posts, messaging, structured offers, and delivery-aware **partner-managed** protected payments.
 
@@ -89,5 +89,7 @@ Or run the local containerized API with `docker compose --profile app up --build
 For local verification emails, check the Django console output; **never use console email in production**. Currency amounts are integer minor units, e.g. NGN 250,000 = `25000000`. New species are **not approved for trade** automatically. Production payments remain disabled.
 
 ## Next implementation gate
+
+Account password recovery is now implemented in Django and Flutter (PR #23), including session revocation and verification resend limits. However a real SMTP service and physical Android/iOS testing remain pending, and staff MFA/device management is not yet done.
 
 The Flutter individual-animal draft creation/editing and photo gallery workflow is now implemented and CI-tested. **Next:** validate real R2 private-bucket staging, evidence retention/deletion, species and welfare policy, health provenance requirements, and physical Android/iOS end-to-end behaviour before considering public release. No live payments are enabled or assumed.
