@@ -64,3 +64,57 @@ class ListingCreateSerializer(serializers.Serializer):
             estimated_age_months=validated_data.pop("estimated_age_months", None),
         )
         return Listing.objects.create(seller=seller, animal=animal, **validated_data)
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        from rest_framework.exceptions import PermissionDenied, ValidationError
+
+        from modules.accounts.models import SellerProfile
+        from modules.media.models import MediaAsset
+
+        actor = self.context["request"].user
+        if not actor.is_active or not actor.is_email_verified:
+            raise PermissionDenied("An active verified account is required")
+        seller_profile = getattr(actor, "seller_profile", None)
+        if seller_profile is None or seller_profile.status not in (
+            SellerProfile.Status.PENDING, SellerProfile.Status.APPROVED
+        ):
+            raise PermissionDenied("An eligible seller application is required")
+
+        listing = Listing.objects.select_for_update().select_related("animal").get(
+            pk=instance.pk, seller=actor
+        )
+        if listing.status != Listing.Status.DRAFT:
+            raise ValidationError({"status": ["Only draft listings can be edited"]})
+        animal = listing.animal
+        new_species = validated_data.pop("species", animal.species)
+        # A newly selected species could make already-reviewed photos misleading.
+        # Require selecting the correct species before starting the photo gallery.
+        if new_species.pk != animal.species_id and MediaAsset.objects.filter(
+            listing=listing, kind=MediaAsset.Kind.LISTING_PHOTO,
+        ).exists():
+            raise ValidationError({
+                "species_id": ["Remove or resolve existing photos before changing animal species"]
+            })
+
+        animal_fields = {
+            "species": new_species,
+            "name": validated_data.pop("animal_name", animal.name),
+            "breed_label": validated_data.pop("breed_label", animal.breed_label),
+            "sex": validated_data.pop("sex", animal.sex),
+            "estimated_age_months": validated_data.pop("estimated_age_months", animal.estimated_age_months),
+        }
+        for field, value in animal_fields.items():
+            setattr(animal, field, value)
+        animal.save(update_fields=list(animal_fields))
+
+        allowed_listing_fields = ("title", "description", "price_minor", "currency", "region")
+        changed = []
+        for field in allowed_listing_fields:
+            if field in validated_data:
+                setattr(listing, field, validated_data[field])
+                changed.append(field)
+        if changed:
+            listing.save(update_fields=changed)
+        return listing
+
