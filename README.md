@@ -86,6 +86,6 @@ Or run the local containerized API with `docker compose --profile app up --build
 
 For local verification emails, check the Django console output; **never use console email in production**. Currency amounts are integer minor units, e.g. NGN 250,000 = `25000000`. New species are **not approved for trade** automatically. Production payments remain disabled.
 
-## First milestone
+## Next implementation gate
 
-Approve product requirements, jurisdiction/species rules, user-flow designs, payment partner requirements, and the client-owned service accounts. Then scaffold the Flutter app, Django backend, Docker Compose, OpenAPI schema, and CI on feature branches.
+Complete the Flutter draft-listing author/edit workflow, including species-aware data, validation and photo management, **before** enabling seller self-service publication. Separately validate private R2 storage in client-owned staging, evidence deletion/retention, species/welfare policy and iOS real-device functionality. No live payments are enabled or assumed.
