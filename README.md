@@ -34,6 +34,7 @@ Cross-platform (Android + iOS) animal-only social and marketplace platform with 
 | [Definition of done](docs/23-definition-of-done-and-acceptance.md) | Per-task completion, regression testing and launch gates |
 | [Private media setup and threat controls](docs/24-media-upload-runbook.md) | Tested backend private photos/evidence API, staff review, local/R2 configuration |
 | [Seller listing workflow](docs/25-seller-listing-workflow.md) | Private draft create/edit, photo gallery, eligibility and moderation gates |
+| [Account recovery and throttling](docs/26-account-recovery.md) | Single-use recovery codes, JWT revocation, anti-abuse, SMTP/Redis setup and remaining gates |
 
 ## Feature-readiness notice
 

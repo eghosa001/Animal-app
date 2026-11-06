@@ -30,13 +30,20 @@ Updated 2026-11-06. Distinguishes working development code from unbuilt producti
 - Post-merge `main` checks must also be inspected. Code CI does not prove live Cloudflare, physical device upload, iOS build, or client/legal acceptance.
 - Earlier milestones: PR #8 fixed flaky Android NDK setup; PR #14 [backend verified](https://github.com/eghosa001/Animal-app/actions/runs/42204310107), PR #15 [Android verified](https://github.com/eghosa001/Animal-app/actions/runs/42205721985).
 
+### M1 account recovery and verification controls — PR #23 (pending CI acceptance)
+
+- Password-reset requests return generic responses and issue single-use, hash-stored emailed codes with expiry and repeat-request cooldown.
+- Successful password recovery revokes all prior access/refresh JWT sessions; verification resend and auth endpoints are per-IP throttled.
+- Flutter has a password recovery form and verification resend actions.
+- [Operational and security controls](26-account-recovery.md) identify required SMTP/Redis setup and uncompleted physical-device verification; do not mark PR #23 as merged until CI/merge are confirmed.
+
 ## M1 remains open — critical blockers
 
 1. Cloudflare R2 real-account, private-bucket staging integration and authorized staff access audit on live infrastructure.
 2. Private evidence legal basis, retention/deletion, malware scanning/PDF support and identity verification policies/provider choice.
 3. Species-specific health, welfare, age, region and trading restrictions approved by responsible professionals, with verifiable records and source provenance.
 4. Real-device Android and iOS end-to-end tests with production-like HTTPS backend and actual customer flows.
-5. Account recovery, session protection and staff MFA, plus additional marketplace search, listing lifecycle and customer support.
+5. Password recovery code/Flutter workflow needs PR #23 verification and live SMTP/device checks; staff MFA, complete session/device management, marketplace search, listing lifecycle and customer support remain outstanding.
 
 **Not yet implemented:** social videos/feed, contextual chat, structured negotiation, order/ledger/regulated protected payments, animal delivery, refunds/disputes, production moderation/support dashboard, push notifications, production hosting, native iOS release and app store publication.
 
