@@ -50,4 +50,4 @@ The [completeness audit](21-feature-completeness-audit.md) distinguishes planned
 - [Media setup guide](24-media-upload-runbook.md) distinguishes verified local/CI work from staging integration, consent/legal, file cleanup and Flutter upload UI still outstanding. **Does not mean M1 or KYC is complete.**
 
 ## Next milestone M1
-Complete secure email delivery service, KYC workflow and staff evidence storage, animal health/photo uploads, seller listing management UI, species approval signoff and real-device end-to-end testing. Do not represent the app as launch-ready.
+Complete production email recovery, data retention and private-evidence safeguards, real R2 staging integration, compliant document handling, species-specific health data, and the Flutter draft-listing author/edit workflow. Obtain qualified species/welfare signoff and complete Android/iOS real-device end-to-end tests. Do not represent the app as launch-ready.
