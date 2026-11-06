@@ -70,5 +70,41 @@ class SellerProfile(models.Model):
     submitted_at = models.DateTimeField(default=timezone.now)
     reviewed_at = models.DateTimeField(null=True, blank=True)
 
+    class Meta:
+        permissions = [
+            ("review_sellerprofile", "Can decide seller review cases"),
+        ]
+
     def __str__(self):
         return f"{self.business_name} ({self.status})"
+
+
+class SellerReviewEvent(models.Model):
+    """Append-only record of why a seller's privilege changed."""
+
+    class Decision(models.TextChoices):
+        APPROVE = "approve", "Approve"
+        REJECT = "reject", "Reject"
+        SUSPEND = "suspend", "Suspend"
+        REOPEN = "reopen", "Reopen for review"
+
+    seller_profile = models.ForeignKey(
+        SellerProfile, on_delete=models.PROTECT, related_name="review_events"
+    )
+    reviewer = models.ForeignKey(
+        User, on_delete=models.PROTECT, related_name="seller_reviews_performed"
+    )
+    decision = models.CharField(max_length=12, choices=Decision.choices)
+    previous_status = models.CharField(max_length=12)
+    new_status = models.CharField(max_length=12)
+    reason = models.TextField(max_length=2000)
+    # References an approved OFFLINE or future third-party review case.
+    # Never put raw identity numbers, photos or sensitive documents here.
+    evidence_case_reference = models.CharField(max_length=80, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Seller {self.seller_profile_id}: {self.decision}"
