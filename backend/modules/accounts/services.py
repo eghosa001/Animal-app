@@ -1,6 +1,8 @@
 """Verification codes: only SHA-256 digests are persisted."""
 import hashlib
 import hmac
+import logging
+import smtplib
 import secrets
 from datetime import timedelta
 
@@ -15,6 +17,8 @@ from django.core.mail import send_mail
 from .models import (
     AccountSecurityEvent, EmailVerificationChallenge, PasswordResetChallenge, User,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def issue_email_verification(user):
@@ -87,36 +91,42 @@ def request_password_reset(email):
     if user is None:
         return
     now = timezone.now()
-    with transaction.atomic():
-        user = User.objects.select_for_update().get(pk=user.pk)
-        if not user.is_active:
-            return
-        challenges = PasswordResetChallenge.objects.filter(user=user)
-        if not _may_issue(
-            challenges, now=now, cooldown_minutes=RESET_COOLDOWN_MINUTES,
-            max_hourly=RESET_MAX_PER_HOUR,
-        ):
-            return
-        raw = secrets.token_urlsafe(32)
-        challenges.filter(used_at__isnull=True).update(used_at=now)
-        PasswordResetChallenge.objects.create(
-            user=user, token_hash=_digest(raw),
-            expires_at=now + timedelta(minutes=RESET_EXPIRES_MINUTES),
-        )
-        AccountSecurityEvent.objects.create(
-            user=user, event=AccountSecurityEvent.Event.PASSWORD_RESET_ISSUED
-        )
-        # Unlike a raw password reset URL, the code cannot be replayed after use.
-        # No URL to a non-existent production domain is placed in the email.
-        send_mail(
-            "Anima password recovery",
-            "Your Anima password recovery code: " + raw +
-            "\n\nExpires in 20 minutes. If you did not request this, ignore this email.",
-            settings.DEFAULT_FROM_EMAIL,
-            [user.email],
-            fail_silently=False,
-        )
-
+    try:
+        with transaction.atomic():
+            user = User.objects.select_for_update().get(pk=user.pk)
+            if not user.is_active:
+                return
+            challenges = PasswordResetChallenge.objects.filter(user=user)
+            if not _may_issue(
+                challenges, now=now, cooldown_minutes=RESET_COOLDOWN_MINUTES,
+                max_hourly=RESET_MAX_PER_HOUR,
+            ):
+                return
+            raw = secrets.token_urlsafe(32)
+            challenges.filter(used_at__isnull=True).update(used_at=now)
+            PasswordResetChallenge.objects.create(
+                user=user, token_hash=_digest(raw),
+                expires_at=now + timedelta(minutes=RESET_EXPIRES_MINUTES),
+            )
+            AccountSecurityEvent.objects.create(
+                user=user, event=AccountSecurityEvent.Event.PASSWORD_RESET_ISSUED
+            )
+            # Unlike a raw password reset URL, the code cannot be replayed after use.
+            # No URL to a non-existent production domain is placed in the email.
+            send_mail(
+                "Anima password recovery",
+                "Your Anima password recovery code: " + raw +
+                "\n\nExpires in 20 minutes. If you did not request this, ignore this email.",
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=False,
+            )
+    
+    except (OSError, smtplib.SMTPException):
+        # Roll back the unmailed token while preserving the generic response.
+        # No account email/token may be logged.
+        logger.exception("Anima password recovery mail dispatch failed")
+        return
 
 @transaction.atomic
 def redeem_password_reset(*, email, token, new_password):
@@ -162,17 +172,21 @@ def resend_email_verification(email):
     if user is None:
         return
     now = timezone.now()
-    with transaction.atomic():
-        user = User.objects.select_for_update().get(pk=user.pk)
-        if not user.is_active or user.is_email_verified:
-            return
-        history = EmailVerificationChallenge.objects.filter(user=user)
-        if not _may_issue(
-            history, now=now, cooldown_minutes=VERIFY_COOLDOWN_MINUTES,
-            max_hourly=VERIFY_MAX_PER_HOUR,
-        ):
-            return
-        issue_email_verification(user)
-        AccountSecurityEvent.objects.create(
-            user=user, event=AccountSecurityEvent.Event.VERIFICATION_RESENT
-        )
+    try:
+        with transaction.atomic():
+            user = User.objects.select_for_update().get(pk=user.pk)
+            if not user.is_active or user.is_email_verified:
+                return
+            history = EmailVerificationChallenge.objects.filter(user=user)
+            if not _may_issue(
+                history, now=now, cooldown_minutes=VERIFY_COOLDOWN_MINUTES,
+                max_hourly=VERIFY_MAX_PER_HOUR,
+            ):
+                return
+            issue_email_verification(user)
+            AccountSecurityEvent.objects.create(
+                user=user, event=AccountSecurityEvent.Event.VERIFICATION_RESENT
+            )
+    except (OSError, smtplib.SMTPException):
+        logger.exception("Anima verification mail dispatch failed")
+        return
