@@ -25,7 +25,12 @@ class ListingViewSet(
         queryset = Listing.objects.select_related("animal__species", "seller")
         if self.action in ("mine", "submit"):
             return queryset.filter(seller=self.request.user) if self.request.user.is_authenticated else queryset.none()
-        return queryset.filter(status=Listing.Status.ACTIVE)
+        return queryset.filter(
+            status=Listing.Status.ACTIVE,
+            seller__seller_profile__status=SellerProfile.Status.APPROVED,
+            seller__is_active=True,
+            animal__species__trade_enabled=True,
+        )
 
     def get_serializer_class(self):
         return ListingCreateSerializer if self.action == "create" else ListingReadSerializer
