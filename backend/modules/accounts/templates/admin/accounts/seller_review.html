@@ -1,0 +1,41 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<section style="max-width: 820px;">
+  <h2>{{ seller.business_name }}</h2>
+  <p>Applicant: {{ seller.user.email }} | Current status: <strong>{{ seller.get_status_display }}</strong></p>
+  <p>Adult attested: {{ seller.adult_attested|yesno:"Yes,No" }} |
+    Email verified: {{ seller.user.is_email_verified|yesno:"Yes,No" }} |
+    Account active: {{ seller.user.is_active|yesno:"Yes,No" }}</p>
+  <p><strong>Manual review only.</strong> An approval requires a secure, independently stored
+    evidence case reference and an actual human verification check. Do not enter document
+    scans, identity numbers, bank details, or private contact data here.</p>
+
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Record review decision" class="default">
+  </form>
+
+  <h2>Recent review history</h2>
+  {% if review_history %}
+  <table>
+    <thead><tr><th>Time</th><th>Decision</th><th>Transition</th><th>Reviewer</th><th>Reason</th><th>Case</th></tr></thead>
+    <tbody>
+      {% for event in review_history %}
+      <tr>
+        <td>{{ event.created_at }}</td>
+        <td>{{ event.get_decision_display }}</td>
+        <td>{{ event.previous_status }} → {{ event.new_status }}</td>
+        <td>{{ event.reviewer.email }}</td>
+        <td>{{ event.reason }}</td>
+        <td>{{ event.evidence_case_reference|default:"—" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No previous review events.</p>
+  {% endif %}
+  <p><a href="{% url 'admin:accounts_sellerprofile_changelist' %}">Return to seller applications</a></p>
+</section>
+{% endblock %}
