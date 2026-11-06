@@ -111,7 +111,7 @@ def request_password_reset(email):
         send_mail(
             "Anima password recovery",
             "Your Anima password recovery code: " + raw +
-            "\\n\\nExpires in 20 minutes. If you did not request this, ignore this email.",
+            "\n\nExpires in 20 minutes. If you did not request this, ignore this email.",
             settings.DEFAULT_FROM_EMAIL,
             [user.email],
             fail_silently=False,

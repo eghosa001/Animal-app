@@ -63,11 +63,11 @@ class VerifyEmailView(APIView):
         token = request.data.get("token", "")
         if not isinstance(token, str) or not token or len(token) > 256:
             raise ValidationError({"token": ["A verification token is required"]})
-        user = User.objects.select_for_update().filter(email=email, is_active=True).first()
-        if user is None:
-            raise ValidationError({"token": ["Invalid or expired verification token"]})
         with transaction.atomic():
-            if not redeem_email_verification(user, token):
+            user = User.objects.select_for_update().filter(
+                email=email, is_active=True
+            ).first()
+            if user is None or not redeem_email_verification(user, token):
                 raise ValidationError({"token": ["Invalid or expired verification token"]})
         return Response({"verified": True})
 

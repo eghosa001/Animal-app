@@ -6,7 +6,6 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     dependencies = [
         ("accounts", "0002_sellerreviewevent_and_permissions"),
-        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
