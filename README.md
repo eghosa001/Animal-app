@@ -1,6 +1,6 @@
 # Animal Platform
 
-**Status:** Active development. M0 and selected M1 modules (manual seller review and private image uploads) have merged with automated tests. No production deployment, payment processor, escrow service, or live cloud infrastructure has been provisioned.
+**Status:** Active development. M0 and selected M1 modules (audited seller review, private media, and Flutter draft animal listings) have merged with automated tests. No production deployment, payment processor, escrow service, or live cloud infrastructure has been provisioned.
 
 Cross-platform (Android + iOS) animal-only social and marketplace platform with verified seller profiles, animal listings, short video and photo posts, messaging, structured offers, and delivery-aware **partner-managed** protected payments.
 
@@ -33,10 +33,11 @@ Cross-platform (Android + iOS) animal-only social and marketplace platform with 
 | [Animal identity and inventory](docs/22-animal-identity-and-inventory.md) | Individual animals, litters, lots, welfare, health evidence and reservation safety |
 | [Definition of done](docs/23-definition-of-done-and-acceptance.md) | Per-task completion, regression testing and launch gates |
 | [Private media setup and threat controls](docs/24-media-upload-runbook.md) | Tested backend private photos/evidence API, staff review, local/R2 configuration |
+| [Seller listing workflow](docs/25-seller-listing-workflow.md) | Private draft create/edit, photo gallery, eligibility and moderation gates |
 
 ## Feature-readiness notice
 
-The platform is **not feature-complete or production-ready**. The [feature completeness audit](docs/21-feature-completeness-audit.md) lists the unbuilt P0 requirements, and the [definition of done](docs/23-definition-of-done-and-acceptance.md) requires evidence before a feature is described as finished. The Django/Flutter code now has a secure, local-testable seller image upload workflow, but no live animal checkout, escrow, social video feed, real Cloudflare R2 integration, or tested iOS release is available. Critical business rules still require client, legal and payment-provider approval.
+The platform is **not feature-complete or production-ready**. The [feature completeness audit](docs/21-feature-completeness-audit.md) lists the unbuilt P0 requirements, and the [definition of done](docs/23-definition-of-done-and-acceptance.md) requires evidence before a feature is described as finished. The Django/Flutter code now supports private seller animal-draft creation/editing, image uploads and photo galleries in a development Android build, but no live animal checkout, escrow, social video feed, real Cloudflare R2 integration, or tested iOS release is available. Critical business rules still require client, legal and payment-provider approval.
 
 ## Intended repository layout
 
@@ -88,4 +89,4 @@ For local verification emails, check the Django console output; **never use cons
 
 ## Next implementation gate
 
-Complete the Flutter draft-listing author/edit workflow, including species-aware data, validation and photo management, **before** enabling seller self-service publication. Separately validate private R2 storage in client-owned staging, evidence deletion/retention, species/welfare policy and iOS real-device functionality. No live payments are enabled or assumed.
+The Flutter individual-animal draft creation/editing and photo gallery workflow is now implemented and CI-tested. **Next:** validate real R2 private-bucket staging, evidence retention/deletion, species and welfare policy, health provenance requirements, and physical Android/iOS end-to-end behaviour before considering public release. No live payments are enabled or assumed.

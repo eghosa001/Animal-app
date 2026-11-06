@@ -25,7 +25,7 @@ Priority legend:
 | Animal record | Identity, age, sex, species, breed, source, health/document provenance | P0 | Partial: basic Animal model only |
 | Inventory | Individual animal sale with exactly-once ownership/availability | P0 | Planned |
 | Litter and group inventory | Individually identified litter members and quantity-controlled livestock/batches | P0 conditional | Not implemented |
-| Listing authoring | Draft, edit, photos/videos, eligibility checks, moderation, active, reserved, sold, removed and expiry | P0 | Partial: draft/submission/approval, reviewed photo uploads and approved-photo read API; no mobile draft editor, listing lifecycle automation or video |
+| Listing authoring | Draft, edit, photos/videos, eligibility checks, moderation, active, reserved, sold, removed and expiry | P0 | Partial: mobile individual-animal draft creation/editing, private gallery, reviewed photos, submission and staff approval; no rich health, lot/litter, reservation/sale expiry or video |
 | Discovery | Search, location (coarse), filters, favourites, seller profile, listing detail, paging and abuse-safe visibility | P0 | Partial: public active-list and seller drafts; no real search UI |
 | Messaging | Offline-safe contextual chat, attachments, notifications, blocking/reporting, anti-scam cues | P0 | Not implemented |
 | Negotiation | Offer/counter/expiry, immutable accepted price, explicit buyer/seller authority | P0 | Not implemented |
@@ -54,6 +54,7 @@ Priority legend:
 
 - Initial foundation: PR #2; Django API, accounts, catalogue and draft/approved listing reads.
 - Private media: PR #14 backed by PostgreSQL tests and PR #15 Flutter image upload UI, widget checks and Android debug APK; live R2 and real-device/iOS remain pending.
+- M1 individual listings: PR #17 draft editing and photo gates; PR #18 audited gallery removal; PR #19 Flutter create/edit, category guidance, private gallery and moderation submission. Post-merge real-device acceptance and live services remain outstanding.
 - CI Android reliability: PR #8, with successful Android debug build.
 - Seller-review audit: PR #9, with PostgreSQL migration validation and backend security tests.
 - **No public production deployment, escrow, payment or live video infrastructure.** The documentation must not describe missing modules as delivered.

@@ -87,7 +87,7 @@ Do not use the word "finished" when only development or code review is complete.
 
 ## 6. Current result at audit date
 
-**Verified code:** Django baseline and restricted seller review; Flutter shell and Android debug CI. **Now partially verified in M1:** private JPEG/PNG animal-photo and seller-evidence uploads with PostgreSQL tests and Android debug build. **Not verified/live:** production R2/real-device image workflow, social video upload/feed, rich listings, messaging, offers, paid checkout, delivery, disputes, full moderation, iOS signing and production services. Version 1 cannot be released under this definition yet.
+**Verified code:** Django baseline and restricted seller review; Flutter shell and Android debug CI. **Now partially verified in M1:** private JPEG/PNG animal-photo and seller-evidence uploads, and mobile individual-animal draft author/edit/gallery workflow, with PostgreSQL tests and Android debug build. **Not verified/live:** production R2/real-device image workflow, social video upload/feed, rich listings, messaging, offers, paid checkout, delivery, disputes, full moderation, iOS signing and production services. Version 1 cannot be released under this definition yet.
 
 ## 7. Required pre-next-step review
 

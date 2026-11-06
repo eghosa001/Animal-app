@@ -1,53 +1,42 @@
-# M0 implementation status
-Updated 2026-11-05. Tracks actual implemented code, not aspirations.
+# Anima implementation status
+Updated 2026-11-06. Distinguishes working development code from unbuilt production capabilities. Full release gates: [definition of done](23-definition-of-done-and-acceptance.md).
 
-## Implemented on main (merged via PR #2)
-- Django app project and versioned /api/v1 routing.
-- PostgreSQL-first runtime with local SQLite fallback only when DEBUG; Docker Compose Postgres/Redis.
-- Custom email-first account model, password validators, JWT access/rotating refresh tokens, refresh-token logout.
-- Verification code sent via Django mail backend (local console in debug); hashed token stored, 24-hour expiration.
-- Seller application creates PENDING; audited staff seller-review screen requires dedicated permission, reason, case reference and evidence-review confirmation. Invalid/self reviews blocked; no KYC integrations yet.
-- Species catalog model and safe seed command; trading OFF by default for every species.
-- Animal + Listing models; seller drafts, seller-only listing view, guarded submission, staff-only publication, public active listing API. Seller suspension removes active listings with audit and public queries dynamically exclude unapproved/inactive sellers and restricted species.
-- Readiness/liveness checks, backend API tests and GitHub Actions.
-- Flutter mobile source with navigation and API-connected basic marketplace/account flows, explicit adult seller attestation, email verification for signed-in users; native Android/iOS runner templates generated via flutter create bootstrap, not committed platform runners.
-- CI compiles a debug Android APK and offers a 7-day workflow artifact for device smoke testing.
-- Payment flag disabled unconditionally. No live cards, fund custody, payout or buyer protection yet.
+## Verified and merged source
 
-## NOT implemented / not live (M0 baseline)
-- At M0: media uploading, video feeds and transcoding were not implemented; private JPEG/PNG uploads were added in PR #14 and mobile picker in PR #15. Video feeds and transcoding remain unbuilt.
-- Realtime chat/WebSockets, offers and push notifications.
-- Orders, payment partner adapter, settlement, ledger, delivery, refund/disputes.
-- External KYC, species law verification, legal documents, production moderation queues.
-- Cloud hosting, DNS, monitoring accounts, store registration, native release signing.
+### M0 foundation — PR #2
+- Django 5.2 API, PostgreSQL-first local services, Redis, versioned routes and health checks.
+- Email-first account, JWT sessions, email verification, seller applications; manual staff seller-review controls added in PR #9.
+- Species catalogue with commercial trading disabled by default; individual-animal records, listing drafts, pending and active moderation states.
+- Flutter Android/iOS source, five-tab navigation, sign-in and account flows. Native platform runners are generated in CI; production app identities/signing not finalized.
 
-## Verification evidence
-- Backend CI passed against PostgreSQL with lint, migration check, migration run and API tests on 2026-11-05.
-- Flutter CI generated Android/iOS runner scaffolds and passed analysis/widget tests. Android debug APK build passed and uploaded a seven-day workflow artifact on 2026-11-05; see https://github.com/eghosa001/Animal-app/actions/runs/42107300025. An actual iOS archive still requires macOS/Xcode and credentials.
-- Financial go-live requires written partner/legal signoff and a separately implemented audit-tested commerce module.
-- Documentation is planning source of truth; feature status is this file and GitHub PR/CI results.
+### M1 audited seller and private media — PRs #9, #14 and #15
+- Audited staff seller approval/rejection/suspension/reopening, explicit reviewer permission and anti-self-review.
+- Private JPEG/PNG uploads with server re-encoding, metadata stripping, opaque storage keys, distinct R2 adapter buckets for evidence versus animal photos, read access audits, photo moderator decisions and seller suspension hiding public media.
+- Flutter gallery picker, private evidence consent, review statuses and approved public photo thumbnails.
+- **Cloud R2 is not configured**, and evidence upload is not independent identity/KYC verification.
 
-## Verified incremental M1 progress (2026-11-06)
-- [PR #8](https://github.com/eghosa001/Animal-app/pull/8): pinned Flutter/NDK and robust NDK-install retry. Android debug build and uploaded APK verified on [CI run](https://github.com/eghosa001/Animal-app/actions/runs/42163692011).
-- [PR #9](https://github.com/eghosa001/Animal-app/pull/9): manual audited seller approval, explicit permission, locked transitions, suspended-listing removal and staff UI. Backend PostgreSQL CI passed **19 tests + 4 subtests**, Django migration checks, and lint on [CI run](https://github.com/eghosa001/Animal-app/actions/runs/42164908370).
-- Manual evidence review requires secure **external** case reference, not raw ID documents. This is NOT third-party automated KYC or completed M1.
-- Private image upload code is now implemented in PR #14 and PR #15, but real R2 staging configuration, PDF scanning, evidence retention, detailed verification criteria, listing author/edit UI, and Android/iOS real-device end-to-end checks remain pending.
+### M1 individual animal listings — PRs #17, #18 and #19
+- [PR #17](https://github.com/eghosa001/Animal-app/pull/17): create/edit draft APIs, per-object permission and state enforcement, atomic updates, cannot edit after submission; require uploaded photo to submit and staff-approved photo to publish.
+- [PR #18](https://github.com/eghosa001/Animal-app/pull/18): auditable *soft removal* of draft photos, revoked reads and reusable draft gallery slots. Physical storage deletion is a future regulated retention/erasure process.
+- [PR #19](https://github.com/eghosa001/Animal-app/pull/19): Flutter Create tab and Profile seller workspace, individual-animal create/edit with species-category guidance, price parsing using integer kobo, draft list, photo gallery previews/removal and submission confirmation, owner session and offline/error states.
+- Trading is still default-denied. A seller may prepare a private draft for a disabled category but cannot submit it.
+- [Workflow and acceptance guide](25-seller-listing-workflow.md) describes the exact current scope and supported attributes.
 
-## Verified M1 private-media work (2026-11-06)
+## Automated verification
 
-- [PR #14](https://github.com/eghosa001/Animal-app/pull/14) merged: authenticated listing-photo and seller verification JPEG/PNG upload, byte/pixel validation, metadata-stripping re-encoding, private-local/R2 adapter with separate private buckets, photo reviewer authorization, owner/reviewer download access and audit. Backend [post-merge CI](https://github.com/eghosa001/Animal-app/actions/runs/42204310107) passed **33 tests + 4 subtests**. Real R2 service and PDF scanning not configured.
-- [PR #15](https://github.com/eghosa001/Animal-app/pull/15) merged: Flutter seller gallery picker, private evidence consent flow, upload status, existing draft-listing selection, public approved photo thumbnails, generated iOS plist key helper and widget tests. [PR CI](https://github.com/eghosa001/Animal-app/actions/runs/42205721985) passed Flutter analysis, widget tests and Android debug APK build. Actual iOS build and device smoke tests not run.
-- [Detailed setup and remaining launch gates](24-media-upload-runbook.md). M1 **remains open**: no Flutter create/edit listing wizard, R2 staging integration, live cloud, compliant evidence retention, uploaded PDF malware scanning or identity provider. Uploading evidence does not establish legal identity verification.
+- [Backend PR CI](https://github.com/eghosa001/Animal-app/actions/runs/42211500550): lint, Django system check, migration consistency, PostgreSQL tests — **46 passed and 4 subtests passed**.
+- [Flutter PR CI](https://github.com/eghosa001/Animal-app/actions/runs/42211500615): Flutter analyzer and widget tests, Android debug APK build and uploaded artifact — passed. The artifact is a **development** build requiring reachable API; it is not Play Store-ready.
+- Post-merge `main` checks must also be inspected. Code CI does not prove live Cloudflare, physical device upload, iOS build, or client/legal acceptance.
+- Earlier milestones: PR #8 fixed flaky Android NDK setup; PR #14 [backend verified](https://github.com/eghosa001/Animal-app/actions/runs/42204310107), PR #15 [Android verified](https://github.com/eghosa001/Animal-app/actions/runs/42205721985).
 
-## Requirements coverage audit (2026-11-06)
+## M1 remains open — critical blockers
 
-The [completeness audit](21-feature-completeness-audit.md) distinguishes planned P0/P1/P2 features from implementation, adds missing account-recovery, health/animal provenance, multi-animal inventory, buyer trust and operational acceptance requirements. No additional user-facing product functionality is implied by this documentation audit. [Definition of done](23-definition-of-done-and-acceptance.md) must be met for each separately verified task. Secure seller evidence uploads and animal listing media remain next on the implementation path.
+1. Cloudflare R2 real-account, private-bucket staging integration and authorized staff access audit on live infrastructure.
+2. Private evidence legal basis, retention/deletion, malware scanning/PDF support and identity verification policies/provider choice.
+3. Species-specific health, welfare, age, region and trading restrictions approved by responsible professionals, with verifiable records and source provenance.
+4. Real-device Android and iOS end-to-end tests with production-like HTTPS backend and actual customer flows.
+5. Account recovery, session protection and staff MFA, plus additional marketplace search, listing lifecycle and customer support.
 
-## M1 backend photo/evidence implementation (2026-11-06)
+**Not yet implemented:** social videos/feed, contextual chat, structured negotiation, order/ledger/regulated protected payments, animal delivery, refunds/disputes, production moderation/support dashboard, push notifications, production hosting, native iOS release and app store publication.
 
-- [PR #14](https://github.com/eghosa001/Animal-app/pull/14): private image upload/preview backend for draft animal listings and seller evidence, safe JPEG/PNG re-encoding, server-side permission checks, owner audit and moderator review. Separate private R2 bucket adapter and debug-local storage are coded; no real Cloudflare credentials connected.
-- Backend API and PostgreSQL tests cover sensitive evidence isolation, MIME/content spoofing, size/quantity limits, listing state changes, approved photo publication and unauthorized staff/buyer access.
-- [Media setup guide](24-media-upload-runbook.md) distinguishes verified local/CI work from staging integration, consent/legal, file cleanup and Flutter upload UI still outstanding. **Does not mean M1 or KYC is complete.**
-
-## Next milestone M1
-Complete production email recovery, data retention and private-evidence safeguards, real R2 staging integration, compliant document handling, species-specific health data, and the Flutter draft-listing author/edit workflow. Obtain qualified species/welfare signoff and complete Android/iOS real-device end-to-end tests. Do not represent the app as launch-ready.
+**Financial controls:** No live payment, escrow, payout, or animal delivery has been activated. No paid production infrastructure has been provisioned. M1 individual-animal draft editing is verified at code/CI level only; **the full platform is not release-ready**.
