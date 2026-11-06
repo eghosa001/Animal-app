@@ -92,7 +92,7 @@ class ListingCreateSerializer(serializers.Serializer):
         # Require selecting the correct species before starting the photo gallery.
         if new_species.pk != animal.species_id and MediaAsset.objects.filter(
             listing=listing, kind=MediaAsset.Kind.LISTING_PHOTO,
-        ).exists():
+        ).exclude(state=MediaAsset.State.REMOVED).exists():
             raise ValidationError({
                 "species_id": ["Remove or resolve existing photos before changing animal species"]
             })

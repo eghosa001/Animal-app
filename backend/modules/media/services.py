@@ -36,7 +36,9 @@ def create_listing_photo(*, user, listing_id, upload):
         raise PermissionDenied("The requested draft listing is unavailable")
     if listing.status != Listing.Status.DRAFT:
         raise ValidationError({"listing_id": ["Only draft listings can receive new photos"]})
-    if MediaAsset.objects.filter(listing=listing, kind=MediaAsset.Kind.LISTING_PHOTO).count() >= MAX_LISTING_PHOTOS:
+    if MediaAsset.objects.filter(
+        listing=listing, kind=MediaAsset.Kind.LISTING_PHOTO,
+    ).exclude(state=MediaAsset.State.REMOVED).count() >= MAX_LISTING_PHOTOS:
         raise ValidationError({"file": ["The listing photo limit has been reached"]})
     image = sanitize_image(upload, max_bytes=MAX_LISTING_BYTES)
     asset_id = uuid.uuid4()

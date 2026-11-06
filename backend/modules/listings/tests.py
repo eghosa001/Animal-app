@@ -212,6 +212,26 @@ class ListingApiTests(APITestCase):
         animal.refresh_from_db()
         self.assertEqual(animal.species_id, self.species.pk)
 
+    def test_species_can_change_after_all_draft_photos_are_removed(self):
+        created = self.client.post("/api/v1/listings/", self.payload, format="json")
+        listing = Listing.objects.get(pk=created.data["id"])
+        alternative = Species.objects.create(
+            name="Rabbits", slug="rabbit-listing",
+            category=Species.Category.COMPANION,
+        )
+        MediaAsset.objects.create(
+            owner=self.user, listing=listing, kind=MediaAsset.Kind.LISTING_PHOTO,
+            state=MediaAsset.State.REMOVED, storage_key="listing-photos/removed.jpg",
+            size_bytes=100, width=32, height=24, sha256="d" * 64,
+        )
+        changed = self.client.patch(
+            f"/api/v1/listings/{listing.pk}/",
+            {"species_id": alternative.pk},
+            format="json",
+        )
+        self.assertEqual(changed.status_code, 200, changed.data)
+        self.assertEqual(changed.data["species"]["name"], "Rabbits")
+
     def test_suspended_seller_cannot_edit_existing_draft(self):
         created = self.client.post("/api/v1/listings/", self.payload, format="json")
         self.seller.status = SellerProfile.Status.SUSPENDED
