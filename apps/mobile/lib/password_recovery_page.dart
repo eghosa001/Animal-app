@@ -151,6 +151,7 @@ class _PasswordRecoveryPageState extends State<PasswordRecoveryPage> {
               ),
               const SizedBox(height: 24),
               TextFormField(
+                key: const Key('recovery-email'),
                 controller: _email,
                 readOnly: _busy || _codeStep,
                 autocorrect: false,
@@ -165,6 +166,7 @@ class _PasswordRecoveryPageState extends State<PasswordRecoveryPage> {
               if (_codeStep) ...[
                 const SizedBox(height: 18),
                 TextFormField(
+                  key: const Key('recovery-code'),
                   controller: _code,
                   autocorrect: false,
                   textInputAction: TextInputAction.next,
@@ -179,6 +181,7 @@ class _PasswordRecoveryPageState extends State<PasswordRecoveryPage> {
                 ),
                 const SizedBox(height: 18),
                 TextFormField(
+                  key: const Key('recovery-new-password'),
                   controller: _password,
                   obscureText: !_showPassword,
                   autofillHints: const [AutofillHints.newPassword],
@@ -197,6 +200,7 @@ class _PasswordRecoveryPageState extends State<PasswordRecoveryPage> {
                 ),
                 const SizedBox(height: 18),
                 TextFormField(
+                  key: const Key('recovery-password-confirmation'),
                   controller: _confirm,
                   obscureText: !_showPassword,
                   autofillHints: const [AutofillHints.newPassword],
@@ -224,6 +228,7 @@ class _PasswordRecoveryPageState extends State<PasswordRecoveryPage> {
               ],
               const SizedBox(height: 20),
               FilledButton.icon(
+                key: const Key('recovery-primary-action'),
                 onPressed: _busy ? null : (_codeStep ? _confirmCode : _requestCode),
                 icon: Icon(_codeStep ? Icons.lock_open_outlined : Icons.mail_outline),
                 label: Text(
