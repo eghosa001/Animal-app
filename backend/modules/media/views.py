@@ -2,7 +2,8 @@
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import status
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.authentication import SessionAuthentication
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -65,6 +66,8 @@ class MyMediaView(APIView):
 
 class MediaFileView(APIView):
     permission_classes = (AllowAny,)
+    # Staff using Django Admin session cookies must be able to read assigned evidence.
+    authentication_classes = (JWTAuthentication, SessionAuthentication)
 
     def get(self, request, asset_id):
         asset = get_object_or_404(
