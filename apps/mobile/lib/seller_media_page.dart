@@ -302,7 +302,7 @@ class _SellerMediaPageState extends State<SellerMediaPage> {
                   File(_selectedImage!.path),
                   height: 180,
                   fit: BoxFit.contain,
-                  errorBuilder: (_, _, _) => const Text('Preview unavailable'),
+                  errorBuilder: (context, error, stackTrace) => const Text('Preview unavailable'),
                 ),
               ),
               const SizedBox(height: 6),
