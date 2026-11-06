@@ -31,7 +31,8 @@ def review_seller(*, seller_id, reviewer, decision, reason, evidence_case_refere
         raise PermissionDenied("Seller reviewer permission is required")
 
     reason = str(reason or "").strip()
-    case_ref = str(evidence_case_reference or "").strip()
+    # Do not trim first: hidden whitespace/newlines can conceal sensitive data.
+    case_ref = str(evidence_case_reference or "")
 
     if len(reason) < 20 or len(reason) > 2000:
         raise ValidationError({"reason": "Enter 20–2000 characters explaining the decision"})
