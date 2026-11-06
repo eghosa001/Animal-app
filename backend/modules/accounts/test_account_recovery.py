@@ -1,5 +1,6 @@
 """Regression tests for recovery token secrecy, account enumeration and JWT revocation."""
 from datetime import timedelta
+from unittest.mock import patch
 
 from django.core import mail
 from django.core.cache import cache
@@ -73,6 +74,17 @@ class AccountRecoveryTests(APITestCase):
         self.assertEqual(AccountSecurityEvent.objects.filter(
             user=self.user, event=AccountSecurityEvent.Event.PASSWORD_RESET_ISSUED
         ).count(), 1)
+
+    def test_mail_transport_failure_returns_generic_response_without_token_row(self):
+        with patch("modules.accounts.services.send_mail", side_effect=OSError("mail unavailable")):
+            response = self.request_reset()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.data,
+            {"message": "If an active account exists, a recovery code will be sent."},
+        )
+        self.assertFalse(PasswordResetChallenge.objects.filter(user=self.user).exists())
+        self.assertFalse(AccountSecurityEvent.objects.filter(user=self.user).exists())
 
     def test_repeated_requests_do_not_send_extra_mail_or_invalidate_first_code(self):
         self.request_reset()

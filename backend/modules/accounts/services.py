@@ -122,10 +122,10 @@ def request_password_reset(email):
                 fail_silently=False,
             )
     
-    except (OSError, smtplib.SMTPException):
-        # Roll back the unmailed token while preserving the generic response.
-        # No account email/token may be logged.
-        logger.exception("Anima password recovery mail dispatch failed")
+    except (OSError, smtplib.SMTPException) as exc:
+        # A traceback may contain recipient addresses or SMTP payloads.
+        # Log only the exception class, never tokens or account identifiers.
+        logger.error("Anima password recovery mail failed (%s)", type(exc).__name__)
         return
 
 @transaction.atomic
@@ -187,6 +187,6 @@ def resend_email_verification(email):
             AccountSecurityEvent.objects.create(
                 user=user, event=AccountSecurityEvent.Event.VERIFICATION_RESENT
             )
-    except (OSError, smtplib.SMTPException):
-        logger.exception("Anima verification mail dispatch failed")
+    except (OSError, smtplib.SMTPException) as exc:
+        logger.error("Anima verification mail failed (%s)", type(exc).__name__)
         return
