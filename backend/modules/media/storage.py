@@ -1,5 +1,4 @@
 """Private provider adapter; all bytes are served through authorized Django routes."""
-import io
 import os
 from pathlib import Path
 

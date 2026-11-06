@@ -58,7 +58,7 @@ def create_seller_evidence(*, user, upload, evidence_type, consent):
     if consent is not True:
         raise ValidationError({"consent": ["Consent to private verification document processing is required"]})
     _ensure_verified_seller(user)
-    seller = SellerProfile.objects.select_for_update().get(user=user)
+    SellerProfile.objects.select_for_update().get(user=user)
     if MediaAsset.objects.filter(owner=user, kind=MediaAsset.Kind.SELLER_EVIDENCE).count() >= MAX_SELLER_EVIDENCE:
         raise ValidationError({"file": ["The verification evidence limit has been reached"]})
     image = sanitize_image(upload, max_bytes=MAX_EVIDENCE_BYTES)
