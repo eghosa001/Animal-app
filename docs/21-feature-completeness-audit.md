@@ -20,12 +20,12 @@ Priority legend:
 | Domain | Production scope and quality expectations | Priority | Current code |
 |---|---|---|---|
 | Identity | Email account, verified contact, login, account recovery, sessions, logout and abuse controls | P0 | Partial: register/JWT/verification; recovery, production email, rate controls incomplete |
-| Seller trust | Adult eligibility, business/individual checks, case evidence, audited staff decisions, suspension and appeals | P0 | Partial: audited manual approval and suspension; external KYC/document upload not connected |
+| Seller trust | Adult eligibility, business/individual checks, case evidence, audited staff decisions, suspension and appeals | P0 | Partial: audited manual approval, suspension, and private JPEG/PNG evidence upload; external KYC and PDF scanning not connected |
 | Animal policy | Species and territorial trade allowlists, prohibited wildlife, minimum welfare conditions, licenses | P0 | Partial: default-disabled species catalogue; rules/legal signoff missing |
 | Animal record | Identity, age, sex, species, breed, source, health/document provenance | P0 | Partial: basic Animal model only |
 | Inventory | Individual animal sale with exactly-once ownership/availability | P0 | Planned |
 | Litter and group inventory | Individually identified litter members and quantity-controlled livestock/batches | P0 conditional | Not implemented |
-| Listing authoring | Draft, edit, photos/videos, eligibility checks, moderation, active, reserved, sold, removed and expiry | P0 | Partial: draft/submission/approval; no editing, photos, sale state automation |
+| Listing authoring | Draft, edit, photos/videos, eligibility checks, moderation, active, reserved, sold, removed and expiry | P0 | Partial: draft/submission/approval, reviewed photo uploads and approved-photo read API; no mobile draft editor, listing lifecycle automation or video |
 | Discovery | Search, location (coarse), filters, favourites, seller profile, listing detail, paging and abuse-safe visibility | P0 | Partial: public active-list and seller drafts; no real search UI |
 | Messaging | Offline-safe contextual chat, attachments, notifications, blocking/reporting, anti-scam cues | P0 | Not implemented |
 | Negotiation | Offer/counter/expiry, immutable accepted price, explicit buyer/seller authority | P0 | Not implemented |
@@ -42,7 +42,7 @@ Priority legend:
 | Admin | RBAC, staff MFA, moderation and financial separation of duties, audit/search queues | P0 | Partial: Django Admin and seller review only |
 | Privacy/compliance | NDPA applicability review, legal terms, consent, retention, export/deletion and processor inventory | P0 | Documented only |
 | Reliability | Encrypted backups/restore drills, alerts, slow-query monitoring, rollout/rollback, health checks | P0 | Partial: local health and CI only |
-| Mobile quality | Real Android/iOS native builds, accessibility, offline/error states, low-bandwidth UX, crash monitoring | P0 | Partial: Flutter shell and Android debug build, not iOS/device acceptance |
+| Mobile quality | Real Android/iOS native builds, accessibility, offline/error states, low-bandwidth UX, crash monitoring | P0 | Partial: Flutter seller image picker/upload and marketplace photo thumbnails pass widget tests and Android debug build; not iOS/device acceptance |
 | Analytics/costs | Revenue/refund conversion, creator/video watch costs, budget alerts, fraud and operational dashboards | P0 minimum; P1 advanced | Planned |
 | Adoption/rescue | Distinct nonprofit/animal rescue process, screening and noncommercial treatment | P1 or P0 conditional | Not implemented |
 | Promoted listings, subscriptions and monetization | Distinguish physical animal sales from app-store digital purchases | P2 | Not implemented |
@@ -53,6 +53,7 @@ Priority legend:
 ### Code evidence
 
 - Initial foundation: PR #2; Django API, accounts, catalogue and draft/approved listing reads.
+- Private media: PR #14 backed by PostgreSQL tests and PR #15 Flutter image upload UI, widget checks and Android debug APK; live R2 and real-device/iOS remain pending.
 - CI Android reliability: PR #8, with successful Android debug build.
 - Seller-review audit: PR #9, with PostgreSQL migration validation and backend security tests.
 - **No public production deployment, escrow, payment or live video infrastructure.** The documentation must not describe missing modules as delivered.

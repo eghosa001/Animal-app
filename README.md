@@ -1,6 +1,6 @@
 # Animal Platform
 
-**Status:** Architecture and implementation planning. No production application, payment processor, escrow service, or live infrastructure has been provisioned.
+**Status:** Active development. M0 and selected M1 modules (manual seller review and private image uploads) have merged with automated tests. No production deployment, payment processor, escrow service, or live cloud infrastructure has been provisioned.
 
 Cross-platform (Android + iOS) animal-only social and marketplace platform with verified seller profiles, animal listings, short video and photo posts, messaging, structured offers, and delivery-aware **partner-managed** protected payments.
 
@@ -36,7 +36,7 @@ Cross-platform (Android + iOS) animal-only social and marketplace platform with 
 
 ## Feature-readiness notice
 
-The platform is **not feature-complete or production-ready**. The [feature completeness audit](docs/21-feature-completeness-audit.md) lists the unbuilt P0 requirements, and the [definition of done](docs/23-definition-of-done-and-acceptance.md) requires evidence before a feature is described as finished. The presently merged Django/Flutter code is a foundation; no live animal checkout, escrow, media feed, secure evidence uploads, or real iOS release is available. Critical business rules still require client, legal and payment-provider approval.
+The platform is **not feature-complete or production-ready**. The [feature completeness audit](docs/21-feature-completeness-audit.md) lists the unbuilt P0 requirements, and the [definition of done](docs/23-definition-of-done-and-acceptance.md) requires evidence before a feature is described as finished. The Django/Flutter code now has a secure, local-testable seller image upload workflow, but no live animal checkout, escrow, social video feed, real Cloudflare R2 integration, or tested iOS release is available. Critical business rules still require client, legal and payment-provider approval.
 
 ## Intended repository layout
 
@@ -86,6 +86,6 @@ Or run the local containerized API with `docker compose --profile app up --build
 
 For local verification emails, check the Django console output; **never use console email in production**. Currency amounts are integer minor units, e.g. NGN 250,000 = `25000000`. New species are **not approved for trade** automatically. Production payments remain disabled.
 
-## First milestone
+## Next implementation gate
 
-Approve product requirements, jurisdiction/species rules, user-flow designs, payment partner requirements, and the client-owned service accounts. Then scaffold the Flutter app, Django backend, Docker Compose, OpenAPI schema, and CI on feature branches.
+Complete the Flutter draft-listing author/edit workflow, including species-aware data, validation and photo management, **before** enabling seller self-service publication. Separately validate private R2 storage in client-owned staging, evidence deletion/retention, species/welfare policy and iOS real-device functionality. No live payments are enabled or assumed.

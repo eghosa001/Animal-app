@@ -1,6 +1,6 @@
 # Private animal-photo and seller-evidence upload runbook
 
-**Implemented code:** PR #14, 2026-11-06. **Deployment:** local/CI verified; R2 real-account integration and production privacy/legal signoff pending.
+**Implemented code:** Backend PR #14 and Flutter PR #15, 2026-11-06. **Deployment:** automated local/CI verification; R2 real-account integration, device/iOS acceptance and production privacy/legal signoff pending.
 
 ## Purpose and explicit boundaries
 
@@ -107,4 +107,12 @@ Official docs:
 
 PR #14 CI runs PostgreSQL tests for decoding and metadata removal, fake MIME, size limits, cross-seller rejection, seller evidence/private reviewer separation, per-object audit, moderator approval and public-status rechecks, local-storage production fail-closed and mock R2 bucket routing. This verifies code behaviours **without** asserting real R2 integration. See the PR and CI log for precise test counts.
 
-**Not finished for production:** real R2 staging credentials; virus scanning and secure PDF support; per-country data processing legal approval; retention/erasure automation and evidence consent text; media deletion/replacement; seller listing editing/gallery UI on Flutter and end-to-end Android/iOS testing; CDN-ready public image derivative strategy. These must be completed in separate, verified tasks before declaring M1 complete.
+**Not finished for production:** real R2 staging credentials; virus scanning and secure PDF support; per-country data processing legal approval; retention/erasure automation and evidence consent text; media deletion/replacement; Flutter creation/editing of new listing drafts, full photo gallery management, and end-to-end Android/iOS device testing; CDN-ready public image derivative strategy. These must be completed in separate, verified tasks before declaring M1 complete.
+
+## Verified mobile integration (PR #15)
+
+The Flutter **Profile → Upload animal photos or verification** screen supports choosing JPEG/PNG images from the gallery, specifying an existing draft listing or private evidence type, confirming consent for verification images, uploading via authenticated multipart HTTP, and refreshing moderation status. Marketplace listings use approved-only photo paths from the backend and show an image thumbnail if available. The widget tests and Android debug APK build passed in [CI run 42205721985](https://github.com/eghosa001/Animal-app/actions/runs/42205721985).
+
+The old artifact display name `anima-m0-debug-apk` is inherited from the existing workflow; the referenced CI run includes the M1 seller upload interface. The artifact is a **development APK**, not a production-ready signed release.
+
+**Important prerequisites for real end-to-end testing:** a running local/staging API, an email-verified seller who has submitted an application, and an existing draft listing for animal photos. The app does not create draft listings yet; that is the next separately testable M1 task. Identity-image uploads can be started from the applicant's profile without a draft. On real Android use a test API reachable by the phone (USB `adb reverse` for local) or HTTPS staging. macOS/Xcode iOS testing and actual Cloudflare R2 integration have not been performed.
