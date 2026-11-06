@@ -30,12 +30,13 @@ Updated 2026-11-06. Distinguishes working development code from unbuilt producti
 - Post-merge `main` checks must also be inspected. Code CI does not prove live Cloudflare, physical device upload, iOS build, or client/legal acceptance.
 - Earlier milestones: PR #8 fixed flaky Android NDK setup; PR #14 [backend verified](https://github.com/eghosa001/Animal-app/actions/runs/42204310107), PR #15 [Android verified](https://github.com/eghosa001/Animal-app/actions/runs/42205721985).
 
-### M1 account recovery and verification controls — PR #23 (pending CI acceptance)
+### M1 recovery and authentication protection — PR #23
 
-- Password-reset requests return generic responses and issue single-use, hash-stored emailed codes with expiry and repeat-request cooldown.
-- Successful password recovery revokes all prior access/refresh JWT sessions; verification resend and auth endpoints are per-IP throttled.
-- Flutter has a password recovery form and verification resend actions.
-- [Operational and security controls](26-account-recovery.md) identify required SMTP/Redis setup and uncompleted physical-device verification; do not mark PR #23 as merged until CI/merge are confirmed.
+- [PR #23](https://github.com/eghosa001/Animal-app/pull/23) **merged**: one-time 20-minute email recovery codes, hashed database storage, account/IP throttles, non-enumerating responses, password-validation rules, verification resend controls and audit events without secrets.
+- After successful reset, all previous access and refresh tokens are rejected, and outstanding refresh tokens are blacklisted. Staff MFA and explicit device/logout-all controls are **not** implemented.
+- Flutter has a Forgot password? journey with code/new-password validation and verification resend action.
+- [Backend CI](https://github.com/eghosa001/Animal-app/actions/runs/42276351500): Django checks/migrations, **57 tests + 4 subtests** passed. [Flutter & Android CI](https://github.com/eghosa001/Animal-app/actions/runs/42276351577): Flutter analysis, **11 widget tests**, Android debug APK compiled and uploaded.
+- [Account recovery operations guide](26-account-recovery.md) documents Redis/SMTP prerequisites. Real outbound SMTP, user-device testing and iOS Xcode validation remain unverified.
 
 ## M1 remains open — critical blockers
 
@@ -43,7 +44,7 @@ Updated 2026-11-06. Distinguishes working development code from unbuilt producti
 2. Private evidence legal basis, retention/deletion, malware scanning/PDF support and identity verification policies/provider choice.
 3. Species-specific health, welfare, age, region and trading restrictions approved by responsible professionals, with verifiable records and source provenance.
 4. Real-device Android and iOS end-to-end tests with production-like HTTPS backend and actual customer flows.
-5. Password recovery code/Flutter workflow needs PR #23 verification and live SMTP/device checks; staff MFA, complete session/device management, marketplace search, listing lifecycle and customer support remain outstanding.
+5. Account recovery is now implemented and CI-tested; production transactional SMTP, staff MFA, full session/device management, live device tests, marketplace search, listing lifecycle and customer support remain outstanding.
 
 **Not yet implemented:** social videos/feed, contextual chat, structured negotiation, order/ledger/regulated protected payments, animal delivery, refunds/disputes, production moderation/support dashboard, push notifications, production hosting, native iOS release and app store publication.
 

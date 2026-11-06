@@ -1,6 +1,6 @@
 # Account recovery and verification abuse-control runbook
 
-**Status:** Code in PR #23 (2026-11-06); claims of passing tests, merge or production readiness must be based on the actual CI results. Part of AUTH-03 and AUTH-04; [issue #10](https://github.com/eghosa001/Animal-app/issues/10) stays OPEN for staff MFA, device/session management and privacy requests.
+**Status:** [PR #23](https://github.com/eghosa001/Animal-app/pull/23) merged on 2026-11-06. PostgreSQL and Flutter CI verified; production SMTP and real Android/iOS tests are pending. Part of AUTH-03 and AUTH-04; [issue #10](https://github.com/eghosa001/Animal-app/issues/10) stays OPEN for staff MFA, device/session management and privacy requests.
 
 ## Product behaviour
 
@@ -45,7 +45,9 @@ Django validates new passwords using `AUTH_PASSWORD_VALIDATORS`; accounts cannot
 
 ## Regression gate
 
-PostgreSQL CI should prove: valid delivery, hashed code, generic unknown/disabled responses, cooldown, bad/expired/replayed/used code rejection, weak/reused password rejection, old access+refresh token invalidation, new login, and IP throttling. Flutter CI should prove request and form validation, analyzer health and debug Android compilation.
+[Backend CI run 42276351500](https://github.com/eghosa001/Animal-app/actions/runs/42276351500) passed **57 tests + 4 subtests**, Django migrations and lint. [Flutter CI run 42276351577](https://github.com/eghosa001/Animal-app/actions/runs/42276351577) passed **11 widget tests**, Flutter analyzer and Android debug build with APK artifact. These verify code, not production outbound email or mobile-device flows.
+
+The PostgreSQL regression gate verifies: valid delivery, hashed code, generic unknown/disabled responses, cooldown, bad/expired/replayed/used code rejection, weak/reused password rejection, old access+refresh token invalidation, new login, and IP throttling. Flutter CI should prove request and form validation, analyzer health and debug Android compilation.
 
 Any missing CI or real-device evidence remains a separate blocker, not a completed production check.
 
