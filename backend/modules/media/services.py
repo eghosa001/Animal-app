@@ -112,3 +112,32 @@ def review_listing_photo(*, asset_id, reviewer, decision, reason):
     asset.save(update_fields=("state", "reviewed_at", "reviewed_by", "review_note"))
     MediaReviewEvent.objects.create(asset=asset, actor=reviewer, decision=decision, reason=reason)
     return asset
+
+
+@transaction.atomic
+def remove_draft_photo(*, asset_id, actor):
+    """Hide and revoke an owner's draft photo without deleting moderation audit evidence.
+
+    This is a SOFT removal; object bytes await a separately approved retention
+    and erasure process. The API must not claim permanent deletion.
+    """
+    from django.http import Http404
+
+    if not actor.is_authenticated or not actor.is_active:
+        raise PermissionDenied("An active account is required")
+    asset = MediaAsset.objects.select_for_update(of=("self",)).select_related(
+        "listing", "owner"
+    ).filter(
+        pk=asset_id, owner=actor, kind=MediaAsset.Kind.LISTING_PHOTO
+    ).first()
+    if asset is None or asset.state == MediaAsset.State.REMOVED:
+        raise Http404()
+    if asset.listing.status != Listing.Status.DRAFT:
+        raise ValidationError({"status": ["Only draft listing photos can be removed"]})
+    asset.state = MediaAsset.State.REMOVED
+    asset.save(update_fields=["state"])
+    MediaReviewEvent.objects.create(
+        asset=asset, actor=actor,
+        decision="removed", reason="Seller removed photograph from draft gallery",
+    )
+    return asset
