@@ -306,7 +306,9 @@ class PrivateMediaApiTests(APITestCase):
         self.assertEqual(self.client.delete(target).status_code, 404)
         # Removal frees the user's slot, but retained bytes await privacy cleanup.
         self.assertEqual(self.upload_photo().status_code, 201)
-        self.client.force_authenticate(user=None)
+        # The anonymous throttle is intentionally shared across tests; use an
+        # authenticated, unrelated user to assert object-level access.
+        self.client.force_authenticate(user=self.buyer)
         self.assertEqual(self.client.get(uploaded.data["file_url"]).status_code, 404)
 
     def test_other_account_cannot_remove_photo_and_submitted_photo_is_locked(self):
