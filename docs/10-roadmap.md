@@ -1,6 +1,20 @@
 # Implementation roadmap and execution backlog
 Version 0.1 — 2026-11-05. Estimates are planning ranges for a small experienced team; solo implementation may take longer.
 
+## Added dependency and completion gates (2026-11-06)
+
+This roadmap must be read alongside the [feature coverage audit](21-feature-completeness-audit.md) and the [definition of done](23-definition-of-done-and-acceptance.md). All tasks are closed **one verified scope at a time**, with reviewed PR, PostgreSQL migration/negative tests, Android/iOS checks where applicable and post-merge evidence. The entire M1 milestone remains open despite the audited seller-review subtask having been merged.
+
+Requirements newly made explicit:
+- **M1 before messaging:** complete private seller evidence/media and verification, species/region approval, individual animal identity and provenance, complete listing author/edit/search/photo UX. Litter/lot inventory is disabled unless a separately tested conditional P0 scope is approved.
+- **M2 before checkout:** object-authorized chat, attachments, blocking/reporting, reconnect, structured offers and immutable agreed price.
+- **M3 before scaling media:** upload quotas, rights, safety review, accessible adaptive playback, creator moderation, billable minutes alerts.
+- **M4 before live commerce:** lawful custody partner contract, fee and refunds policy, inventory reservations, traceable handover, disputes, ledger balance and daily reconciliation.
+- **M5 before public stores:** account recovery/deletion, audit roles and staff MFA, customer support, disaster recovery rehearsal, independent Android/iOS device testing, in-app abuse controls.
+- **M6 final release:** client/legal/financial signoff and measured quality gates; no blocked P0 feature silently turned on.
+
+Projected dates remain illustrative and require rescoping after client confirms animal categories and the payment partner.
+
 ## Guiding schedule
 Target approximately 18–26 weeks for a high-quality first release if payment underwriting, legal review, test devices, and product decisions are not blocked. Develop incremental, testable vertical slices. Payment/legal and account setup run in parallel, but production commerce has a hard launch gate.
 

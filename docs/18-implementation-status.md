@@ -33,5 +33,9 @@ Updated 2026-11-05. Tracks actual implemented code, not aspirations.
 - Manual evidence review requires secure **external** case reference, not raw ID documents. This is NOT third-party automated KYC or completed M1.
 - Seller media uploads, identity-evidence storage, detailed verification requirements, listing editing UI and Android/iOS real-device end-to-end checks remain pending.
 
+## Requirements coverage audit (2026-11-06)
+
+The [completeness audit](21-feature-completeness-audit.md) distinguishes planned P0/P1/P2 features from implementation, adds missing account-recovery, health/animal provenance, multi-animal inventory, buyer trust and operational acceptance requirements. No additional user-facing product functionality is implied by this documentation audit. [Definition of done](23-definition-of-done-and-acceptance.md) must be met for each separately verified task. Secure seller evidence uploads and animal listing media remain next on the implementation path.
+
 ## Next milestone M1
 Complete secure email delivery service, KYC workflow and staff evidence storage, animal health/photo uploads, seller listing management UI, species approval signoff and real-device end-to-end testing. Do not represent the app as launch-ready.

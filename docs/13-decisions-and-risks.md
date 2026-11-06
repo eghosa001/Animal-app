@@ -49,5 +49,19 @@ ID; title; date; owner; background; options; chosen option; tradeoffs; security/
 11. Brand theme, language and localization; admin staff roles.
 12. Contracted ownership of code, assets, designs and ability to reuse existing site concepts.
 
+## Additional high-impact risks identified in the completeness audit (2026-11-06)
+
+| Risk | Impact | Required control |
+|---|---|---|
+| Individual animal, litter or livestock lot sold twice | Critical | Explicit inventory modes, unique allocation, transactional reservations, expiry and refund/manual reconciliation |
+| Animal health/pedigree claims mistaken for independent verification | High | Provenance tiers and expiry; truthfully labelled seller-supplied vs document-reviewed vs independently verified |
+| Malicious uploads expose documents or location metadata | Critical | Private evidence store, media validation, authorized time-limited access, EXIF redaction and retention |
+| Seller loses approval while order/listing remains accessible | Critical | Server-side eligibility recheck, immediate listing removal, held-order exception handling and audit |
+| Missing password recovery/account deletion or staff MFA blocks store/privacy readiness | High | Dedicated requirements AUTH-03/AUTH-04/PRIV-02 and app-store compliance tests |
+| Chat/reviews used to deceive buyers or circumvent payment protection | High | Clear non-waivable-rights notice, fraud reports, verified-transaction reviews and moderated appeals |
+| Developing every P2 feature stalls a safe launch | High | P0/P0-conditional gate, disable unapproved sales modes, postpone P2 until core reliability proven |
+
+See [feature completeness audit](21-feature-completeness-audit.md), [animal identity/inventory](22-animal-identity-and-inventory.md) and [definition of done](23-definition-of-done-and-acceptance.md). These are planning controls, not substitutes for qualified legal, financial or veterinary review.
+
 ## Planning rule
 If a decision impacts money custody, animal legality, user safety, store policy or data protection, it is a written launch gate, not an unchecked implementation assumption.

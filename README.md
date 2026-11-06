@@ -29,6 +29,13 @@ Cross-platform (Android + iOS) animal-only social and marketplace platform with 
 | [Infrastructure and deployment](docs/17-infrastructure-and-deployment.md) | Environments, release, secrets, recovery |
 | [Android CI reliability](docs/19-android-ci-reliability.md) | Pinned Flutter/NDK, retry and failure runbook |
 | [Seller review runbook](docs/20-seller-review-runbook.md) | Staff permissions, evidence case IDs, audit and suspension controls |
+| [Feature completeness audit](docs/21-feature-completeness-audit.md) | Current implemented vs planned features, P0/P1/P2 gaps, journey acceptance |
+| [Animal identity and inventory](docs/22-animal-identity-and-inventory.md) | Individual animals, litters, lots, welfare, health evidence and reservation safety |
+| [Definition of done](docs/23-definition-of-done-and-acceptance.md) | Per-task completion, regression testing and launch gates |
+
+## Feature-readiness notice
+
+The platform is **not feature-complete or production-ready**. The [feature completeness audit](docs/21-feature-completeness-audit.md) lists the unbuilt P0 requirements, and the [definition of done](docs/23-definition-of-done-and-acceptance.md) requires evidence before a feature is described as finished. The presently merged Django/Flutter code is a foundation; no live animal checkout, escrow, media feed, secure evidence uploads, or real iOS release is available. Critical business rules still require client, legal and payment-provider approval.
 
 ## Intended repository layout
 

@@ -1,6 +1,10 @@
 # Testing, QA, performance and app-store release
 Version 0.1 — 2026-11-05.
 
+## Enforced acceptance criteria (2026-11-06)
+
+All feature implementation must satisfy the [definition of done](23-definition-of-done-and-acceptance.md). The [coverage audit](21-feature-completeness-audit.md) lists additional P0 requirements not previously tracked explicitly, while the [inventory specification](22-animal-identity-and-inventory.md) provides concurrency, welfare, media privacy and health provenance failure tests. An approved Android debug CI build alone does not prove an iOS release or full end-to-end commerce.
+
 ## Testing pyramid
 - Pure unit: money allocation/rounding, permissions, species policy, order transitions, feed ranking.
 - Database/integration: Django ORM, row locks, uniqueness, migrations, transaction journals, idempotent outbox.

@@ -44,6 +44,21 @@ Accounts have capabilities, not mutually exclusive labels. Adult-only commerce a
 
 P0 = launch-critical; P1 = post-beta improvements; P2 = later. If payment partner is unavailable, a **non-transactional private beta** may demonstrate listings, video, chat, and offers only; production commerce is blocked.
 
+## High-standard feature coverage addendum (2026-11-06)
+
+The original feature matrix specifies the platform's major modules; several release-critical subflows require more precise acceptance. See the audited [feature and implementation coverage](21-feature-completeness-audit.md), [animal inventory and health provenance design](22-animal-identity-and-inventory.md), and [definition of done](23-definition-of-done-and-acceptance.md).
+
+Additional launch-critical requirements include:
+- Account password recovery, safe verification resend and staff MFA; secure deletion/export workflows.
+- Private seller identity/business/license evidence, reviewer decisions, trust tiers and suspension; **never** equate seller verification with independently proven animal health.
+- Conditional animal fields per species; distinct **individual**, **litter** and **group/lot** inventory modes, with unavailable modes disabled until implemented.
+- Proper listing editing, media scanning, expiry, animal reservation, public status consistency, sold/withdrawn states and authentic reviews.
+- Message authorization, anti-scam warnings and offers with immutable accepted prices; real-time reconnect/retry.
+- Species-appropriate health disclosures and live-animal handover, buyer dispute escalation and financial payout prevention.
+- Moderation/reporting/appeals, customer support, privacy, offline states, usable Android/iOS QA and monitored video costs.
+
+The requirements are **approved in documentation only where explicitly signed by the client**. A feature being listed as P0 does not mean it is already implemented. P0 conditional features are required only if the corresponding animal category, inventory model or commerce territory is activated. Scope should prioritize a polished, safe initial release over premature livestreaming, subscriptions, and international trading.
+
 ## User journeys
 ### Buyer
 Onboard -> select animal interests -> feed/market search -> listing -> verified seller profile -> listing-linked chat -> make offer -> accepted offer -> signed terms and exact order amount -> partner checkout -> payment verified -> pickup/transport -> inspection & handover -> confirm OR dispute -> payout eligibility -> review. Every step has a clear next action, receipt, and support route.
