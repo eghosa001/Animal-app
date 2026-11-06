@@ -78,14 +78,41 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.AnonRateThrottle",
         "rest_framework.throttling.UserRateThrottle",
     ),
-    "DEFAULT_THROTTLE_RATES": {"anon": "30/minute", "user": "120/minute"},
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "30/minute",
+        "user": "120/minute",
+        "auth_login": "10/minute",
+        "auth_refresh": "30/minute",
+        "auth_register": "5/hour",
+        "auth_verify": "12/hour",
+        "auth_resend": "5/hour",
+        "auth_password_request": "5/hour",
+        "auth_password_confirm": "12/hour",
+    },
 }
+# Shared Redis throttling is mandatory outside debug. In-process cache is
+# intentionally restricted to single-developer local runs.
+redis_url = os.getenv("REDIS_URL")
+if redis_url:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": redis_url,
+            "KEY_PREFIX": "anima-auth-v1",
+        }
+    }
+elif DEBUG:
+    CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+else:
+    raise RuntimeError("REDIS_URL must be configured for shared API throttling in production")
+
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
+    "CHECK_REVOKE_TOKEN": True,
 }
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
