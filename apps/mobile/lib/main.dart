@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'core/api_client.dart';
+import 'seller_media_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -204,7 +205,19 @@ class _MarketplacePageState extends State<MarketplacePage> {
               final item = listings[index];
               return Card(
                 child: ListTile(
-                  leading: const Icon(Icons.pets_outlined, size: 34),
+                  leading: item.photoUrls.isEmpty
+                      ? const Icon(Icons.pets_outlined, size: 34)
+                      : ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            Uri.parse(apiBaseUrl).resolve(item.photoUrls.first).toString(),
+                            width: 56,
+                            height: 56,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(Icons.pets_outlined, size: 34),
+                          ),
+                        ),
                   title: Text(item.title),
                   subtitle: Text('${item.speciesName} • ${item.region}\nSeller: ${item.sellerName}'),
                   isThreeLine: true,
@@ -414,6 +427,16 @@ class _AccountPageState extends State<AccountPage> {
               child: const Text('Apply to become a seller (adults only)'),
             ),
           ],
+          if (profile['seller_status'] == 'pending' || profile['seller_status'] == 'approved')
+            OutlinedButton.icon(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (context) => SellerMediaPage(api: widget.api),
+                ),
+              ),
+              icon: const Icon(Icons.cloud_upload_outlined),
+              label: const Text('Upload animal photos or verification'),
+            ),
           OutlinedButton(
             onPressed: _busy ? null : () => _act(() async {
               await widget.api.logout();

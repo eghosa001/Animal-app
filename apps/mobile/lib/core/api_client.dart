@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:http_parser/http_parser.dart';
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
@@ -27,6 +29,7 @@ class AnimalListing {
     required this.region,
     required this.currency,
     required this.priceMinor,
+    required this.photoUrls,
   });
 
   final String id;
@@ -38,6 +41,7 @@ class AnimalListing {
   final String region;
   final String currency;
   final int priceMinor;
+  final List<String> photoUrls;
 
   factory AnimalListing.fromJson(Map<String, dynamic> json) {
     final species = json['species'] as Map<String, dynamic>? ?? {};
@@ -51,6 +55,7 @@ class AnimalListing {
       region: json['region'] as String? ?? '',
       currency: json['currency'] as String? ?? 'NGN',
       priceMinor: (json['price_minor'] as num?)?.toInt() ?? 0,
+      photoUrls: (json['photo_urls'] as List<dynamic>? ?? []).whereType<String>().toList(),
     );
   }
 
@@ -193,6 +198,84 @@ class ApiClient {
       }, token: access);
     }
     _decode(response);
+  }
+
+
+  /// Draft listings owned by this seller. Photos may be uploaded only to drafts.
+  Future<List<Map<String, dynamic>>> getMyListings() async {
+    final body = _decode(await _authorizedGet('/api/v1/listings/mine/'));
+    final items = body['results'] as List<dynamic>? ?? [];
+    return items.cast<Map<String, dynamic>>();
+  }
+
+  /// The owner can see upload status but never private storage keys or bucket details.
+  Future<List<Map<String, dynamic>>> getMyMedia() async {
+    final response = await _authorizedGet('/api/v1/media/mine/');
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      _decode(response);
+      throw const ApiFailure('Unable to load uploaded media');
+    }
+    final decoded = jsonDecode(response.body);
+    if (decoded is! List) {
+      throw const ApiFailure('Unexpected media response');
+    }
+    return decoded.cast<Map<String, dynamic>>();
+  }
+
+  Future<Map<String, dynamic>> uploadPrivateImage({
+    required String path,
+    required String mimeType,
+    String? listingId,
+    String? evidenceType,
+    bool consent = false,
+  }) async {
+    if (mimeType != 'image/jpeg' && mimeType != 'image/png') {
+      throw const ApiFailure('Only JPEG and PNG images can be uploaded');
+    }
+    final evidence = listingId == null;
+    if (evidence && (evidenceType == null || !consent)) {
+      throw const ApiFailure('Evidence category and consent are required');
+    }
+    if (!evidence && (listingId.isEmpty)) {
+      throw const ApiFailure('Select an animal listing');
+    }
+    final endpoint = evidence
+        ? '/api/v1/media/seller-evidence/'
+        : '/api/v1/media/listing-photos/';
+
+    Future<http.Response> send(String token) async {
+      final request = http.MultipartRequest('POST', _uri(endpoint));
+      request.headers['Authorization'] = 'Bearer $token';
+      if (evidence) {
+        request.fields['evidence_type'] = evidenceType!;
+        request.fields['consent'] = 'true';
+      } else {
+        request.fields['listing_id'] = listingId;
+      }
+      request.files.add(await http.MultipartFile.fromPath(
+        'file',
+        path,
+        contentType: MediaType.parse(mimeType),
+      ));
+      final streamed = await _client.send(request).timeout(
+        const Duration(seconds: 45),
+      );
+      return http.Response.fromStream(streamed);
+    }
+
+    var access = await _storage.read(key: 'anima_access');
+    if (access == null) {
+      throw const ApiFailure('Please sign in to upload images');
+    }
+    var response = await send(access);
+    if (response.statusCode == 401) {
+      access = await _refresh();
+      if (access == null) {
+        throw const ApiFailure('Session expired. Sign in again.');
+      }
+      response = await send(access);
+    }
+    return _decode(response);
   }
 
   Future<List<AnimalListing>> getListings() async {

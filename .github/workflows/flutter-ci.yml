@@ -27,6 +27,7 @@ jobs:
         run: |
           cd apps/mobile
           flutter create --platforms=android,ios --project-name anima_app --org com.anima .
+          python3 ../../scripts/configure_ios_photo_permissions.py ios/Runner/Info.plist
       - name: Dependencies and static analysis
         run: |
           cd apps/mobile
@@ -55,6 +56,7 @@ jobs:
         run: |
           cd apps/mobile
           flutter create --platforms=android,ios --project-name anima_app --org com.anima .
+          python3 ../../scripts/configure_ios_photo_permissions.py ios/Runner/Info.plist
       - name: Install Android NDK with retry (network-safe)
         shell: bash
         run: |
