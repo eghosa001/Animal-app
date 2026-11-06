@@ -88,7 +88,7 @@ def review_listing_photo(*, asset_id, reviewer, decision, reason):
     reason = str(reason or "").strip()
     if not 20 <= len(reason) <= 500:
         raise ValidationError({"reason": ["Review reason must be 20–500 characters"]})
-    asset = MediaAsset.objects.select_for_update().select_related(
+    asset = MediaAsset.objects.select_for_update(of=("self",)).select_related(
         "listing__animal__species", "listing__seller", "owner"
     ).get(pk=asset_id, kind=MediaAsset.Kind.LISTING_PHOTO)
     if reviewer.pk == asset.owner_id:
