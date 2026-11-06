@@ -19,7 +19,7 @@ class ListingReadSerializer(serializers.ModelSerializer):
 
     def get_photo_urls(self, obj):
         from django.urls import reverse
-        from modules.media.models import MediaAsset, MediaReviewEvent
+        from modules.media.models import MediaAsset
 
         return [
             reverse("media-file", kwargs={"asset_id": asset.pk})
@@ -70,7 +70,7 @@ class ListingCreateSerializer(serializers.Serializer):
         from rest_framework.exceptions import PermissionDenied, ValidationError
 
         from modules.accounts.models import SellerProfile
-        from modules.media.models import MediaAsset
+        from modules.media.models import MediaAsset, MediaReviewEvent
 
         actor = self.context["request"].user
         if not actor.is_active or not actor.is_email_verified:
