@@ -133,6 +133,31 @@ class ApiClient {
     }));
   }
 
+  /// Generic response whether an active account exists or not.
+  Future<void> requestPasswordReset(String email) async {
+    _decode(await _post('/api/v1/auth/password-reset/request', {
+      'email': email.trim().toLowerCase(),
+    }));
+  }
+
+  Future<void> confirmPasswordReset({
+    required String email,
+    required String code,
+    required String newPassword,
+  }) async {
+    _decode(await _post('/api/v1/auth/password-reset/confirm', {
+      'email': email.trim().toLowerCase(),
+      'token': code.trim(),
+      'new_password': newPassword,
+    }));
+  }
+
+  Future<void> resendVerification(String email) async {
+    _decode(await _post('/api/v1/auth/resend-verification', {
+      'email': email.trim().toLowerCase(),
+    }));
+  }
+
   Future<void> login(String email, String password) async {
     final result = _decode(await _post('/api/v1/auth/login', {
       'email': email,

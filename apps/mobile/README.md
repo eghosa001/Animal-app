@@ -42,6 +42,10 @@ The photo reviewer must approve listing photos before they can become public on 
 
 The `image_picker` plugin requires an iOS photo-library purpose string. The generator helper above adds it to the temporary native runner. The final, client-owned Xcode project must retain this entry and be reviewed in a macOS/iOS build; an Android CI build does not prove iOS release readiness.
 
+## Account recovery (M1 partial)
+
+From the signed-out **Profile** screen, tap **Forgot password?**. Enter your registered email and request a 20-minute recovery code; unknown addresses receive the same generic response. Enter the code and a new valid password to change the account password and invalidate older devices' JWT sessions. Unverified users can also **Resend verification code** with an account cooldown. The mobile screen and backend are covered by automated tests; real SMTP and real Android/iOS end-to-end tests remain outstanding. See [the security runbook](../../docs/26-account-recovery.md).
+
 ## Implemented mobile functionality
 Five-tab shell, light/dark styling, real API market list with loading/error/empty/retry states, email registration, sign-in, token-based email verification, session persistence via platform secure storage, seller application pending manual staff review, and the animal draft create/edit workspace, private image picker/gallery and seller evidence upload. The Create tab supports individual-animal listings; social video creation and chat truthfully state those features are not implemented. No live payment or animal trade promise.
 

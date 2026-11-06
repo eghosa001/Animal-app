@@ -1,4 +1,5 @@
 """Public feed and listing publication remain guarded server-side."""
+from django.core.cache import cache
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
@@ -13,6 +14,8 @@ from .services import approve_listing
 
 class ListingApiTests(APITestCase):
     def setUp(self):
+        # Login requests use an IP-scoped throttle; test cases are independent.
+        cache.clear()
         self.user = User.objects.create_user(
             email="seller@example.com", display_name="Seller",
             password="StrongPass!90909", email_verified_at=timezone.now(),

@@ -56,3 +56,21 @@ class SellerSerializer(serializers.ModelSerializer):
         model = SellerProfile
         fields = ("business_name", "status", "submitted_at", "reviewed_at")
         read_only_fields = fields
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField(max_length=254)
+
+    def validate_email(self, value):
+        return value.strip().lower()
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    email = serializers.EmailField(max_length=254)
+    token = serializers.CharField(min_length=1, max_length=256, trim_whitespace=False)
+    new_password = serializers.CharField(
+        min_length=10, max_length=128, write_only=True, trim_whitespace=False
+    )
+
+    def validate_email(self, value):
+        return value.strip().lower()

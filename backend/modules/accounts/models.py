@@ -108,3 +108,36 @@ class SellerReviewEvent(models.Model):
 
     def __str__(self):
         return f"Seller {self.seller_profile_id}: {self.decision}"
+
+
+class PasswordResetChallenge(models.Model):
+    """Single-use recovery code. Only the digest is stored, never the emailed token."""
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="password_reset_challenges")
+    token_hash = models.CharField(max_length=64)
+    expires_at = models.DateTimeField()
+    used_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=("user", "created_at"), name="anima_pw_reset_user_idx"),
+        ]
+
+
+class AccountSecurityEvent(models.Model):
+    """Non-secret record of account security decisions, not an email or token log."""
+
+    class Event(models.TextChoices):
+        PASSWORD_RESET_ISSUED = "reset_issued", "Recovery challenge issued"
+        PASSWORD_RESET_COMPLETED = "reset_completed", "Password changed using recovery"
+        VERIFICATION_RESENT = "verify_resent", "Verification code resent"
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="security_events")
+    event = models.CharField(max_length=20, choices=Event.choices)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=("user", "created_at"), name="anima_security_event_idx"),
+        ]
