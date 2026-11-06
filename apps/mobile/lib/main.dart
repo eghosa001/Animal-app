@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'core/api_client.dart';
+import 'password_recovery_page.dart';
 import 'seller_media_page.dart';
 import 'seller_listings_page.dart';
 
@@ -378,6 +379,31 @@ class _AccountPageState extends State<AccountPage> {
             },
             child: Text(_register ? 'Register' : 'Sign in'),
           ),
+          if (!_register)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: _busy
+                    ? null
+                    : () async {
+                        final recovered = await Navigator.of(context).push<bool>(
+                          MaterialPageRoute(
+                            builder: (context) => PasswordRecoveryPage(
+                              api: widget.api,
+                              initialEmail: _email.text.trim(),
+                            ),
+                          ),
+                        );
+                        if (recovered == true && mounted) {
+                          setState(() {
+                            _password.clear();
+                            _message = 'Password updated. Sign in with your new password.';
+                          });
+                        }
+                      },
+                child: const Text('Forgot password?'),
+              ),
+            ),
           const SizedBox(height: 16),
           TextField(controller: _token, decoration: const InputDecoration(labelText: 'Email verification token')),
           const SizedBox(height: 8),
@@ -387,6 +413,14 @@ class _AccountPageState extends State<AccountPage> {
               if (mounted) { setState(() => _message = 'Email verified. You may now sign in.'); }
             }),
             child: const Text('Verify email'),
+          ),
+          OutlinedButton(
+            onPressed: _busy ? null : () => _act(() async {
+              await widget.api.resendVerification(_email.text.trim());
+              if (mounted) { setState(() => _message =
+                'If verification is still needed, a new code will be emailed. Repeated requests may be limited.'); }
+            }),
+            child: const Text('Resend verification code'),
           ),
         ] else ...[
           ListTile(title: Text(profile['display_name']?.toString() ?? ''), subtitle: Text(profile['email']?.toString() ?? '')),
@@ -407,6 +441,14 @@ class _AccountPageState extends State<AccountPage> {
                 if (mounted) { setState(() => _message = 'Your email is verified.'); }
               }),
               child: const Text('Verify email'),
+            ),
+            OutlinedButton(
+              onPressed: _busy ? null : () => _act(() async {
+                await widget.api.resendVerification(profile['email']?.toString() ?? '');
+                if (mounted) { setState(() => _message =
+                  'If verification is still needed, a new code will be emailed. Repeated requests may be limited.'); }
+              }),
+              child: const Text('Resend verification code'),
             ),
           ],
           if (profile['seller_status'] == null && profile['email_verified'] == true) ...[
