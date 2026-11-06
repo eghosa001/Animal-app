@@ -257,6 +257,41 @@ class PrivateMediaApiTests(APITestCase):
         self.assertEqual(len(data.data), 2)
         self.assertTrue(all("storage_key" not in item for item in data.data))
 
+    def test_django_admin_session_access_to_seller_evidence_is_audited(self):
+        self.upload_evidence()
+        asset = MediaAsset.objects.get(kind=MediaAsset.Kind.SELLER_EVIDENCE)
+        self.client.force_authenticate(user=None)
+        self.client.force_login(self.identity_reviewer)
+        file_response = self.client.get(f"/api/v1/media/{asset.pk}/file/")
+        self.assertEqual(file_response.status_code, 200)
+        self.assertEqual(MediaAccessEvent.objects.count(), 1)
+        self.assertEqual(MediaAccessEvent.objects.first().actor, self.identity_reviewer)
+        self.client.force_login(self.reviewer)
+        self.assertEqual(self.client.get(f"/api/v1/media/{asset.pk}/file/").status_code, 404)
+
+    def test_django_admin_photo_review_and_permission_gate(self):
+        from django.urls import reverse
+
+        photo = self.upload_photo()
+        asset = MediaAsset.objects.get(pk=photo.data["id"])
+        profile = self.seller.seller_profile
+        profile.status = SellerProfile.Status.APPROVED
+        profile.save(update_fields=["status"])
+        url = reverse("admin:animal_media_mediaasset_review", args=[asset.pk])
+        self.client.force_authenticate(user=None)
+        self.client.force_login(self.identity_reviewer)
+        self.assertEqual(self.client.get(url).status_code, 403)
+        self.client.force_login(self.reviewer)
+        self.assertEqual(self.client.get(url).status_code, 200)
+        decision = self.client.post(url, {
+            "decision": "approve",
+            "reason": "Photo content manually checked against the animal listing moderation rules.",
+        })
+        self.assertEqual(decision.status_code, 302)
+        asset.refresh_from_db()
+        self.assertEqual(asset.state, MediaAsset.State.APPROVED)
+        self.assertEqual(MediaReviewEvent.objects.count(), 1)
+
     def test_unsafe_local_storage_disabled_outside_debug(self):
         with override_settings(DEBUG=False, MEDIA_STORAGE_BACKEND="local"):
             with self.assertRaises(MediaStorageError):
