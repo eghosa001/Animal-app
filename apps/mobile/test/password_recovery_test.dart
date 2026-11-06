@@ -83,7 +83,11 @@ void main() {
       find.byKey(const Key('recovery-password-confirmation')),
       'NotSamePassword!2026',
     );
-    await tester.ensureVisible(find.byKey(const Key('recovery-primary-action')));
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('recovery-primary-action')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.byKey(const Key('recovery-primary-action')));
     await tester.pumpAndSettle();
     expect(find.text('Passwords do not match'), findsOneWidget);
@@ -93,7 +97,11 @@ void main() {
       find.byKey(const Key('recovery-password-confirmation')),
       'NewPassword!2026',
     );
-    await tester.ensureVisible(find.byKey(const Key('recovery-primary-action')));
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('recovery-primary-action')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.byKey(const Key('recovery-primary-action')));
     await tester.pumpAndSettle();
     expect(api.confirmCalls, 1);
