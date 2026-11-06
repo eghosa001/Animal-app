@@ -19,7 +19,7 @@ CASE_REFERENCE_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{3,79}$")
 
 
 @transaction.atomic
-def review_seller(*, seller_id, reviewer, decision, reason, evidence_case_reference=""):
+def review_seller(*, seller_id, reviewer, decision, reason, evidence_case_reference="", evidence_reviewed=False):
     """Transition one seller under a row lock; audit changes and invalidate risky listings.
 
     A case reference is an opaque, internal identifier for evidence reviewed outside
@@ -53,6 +53,8 @@ def review_seller(*, seller_id, reviewer, decision, reason, evidence_case_refere
     if decision == SellerReviewEvent.Decision.APPROVE:
         if not case_ref:
             raise ValidationError({"evidence_case_reference": "Approval requires a documented case reference"})
+        if not evidence_reviewed:
+            raise ValidationError({"evidence_reviewed": "Human reviewer confirmation is required"})
         if not seller.adult_attested or not seller.user.is_active or not seller.user.is_email_verified:
             raise ValidationError({
                 "seller": "An adult-attested, active, email-verified applicant is required"

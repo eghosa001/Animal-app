@@ -82,6 +82,7 @@ class SellerProfileAdmin(admin.ModelAdmin):
                     decision=form.cleaned_data["decision"],
                     reason=form.cleaned_data["reason"],
                     evidence_case_reference=form.cleaned_data.get("evidence_case_reference", ""),
+                    evidence_reviewed=form.cleaned_data.get("confirm_manual_evidence_review", False),
                 )
             except ValidationError as exc:
                 if hasattr(exc, "message_dict"):

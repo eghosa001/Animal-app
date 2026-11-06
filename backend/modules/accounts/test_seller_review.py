@@ -55,6 +55,7 @@ class SellerReviewTests(APITestCase):
             decision=decision,
             reason=kwargs.pop("reason", RATIONALE),
             evidence_case_reference=kwargs.pop("evidence_case_reference", CASE_REF),
+            evidence_reviewed=kwargs.pop("evidence_reviewed", True),
             **kwargs,
         )
 
@@ -73,6 +74,12 @@ class SellerReviewTests(APITestCase):
         self.assertEqual(event.new_status, "approved")
         self.assertEqual(event.evidence_case_reference, CASE_REF)
         self.assertIsNotNone(self.seller.reviewed_at)
+
+    def test_approval_fails_without_evidence_confirmation_even_for_authorized_staff(self):
+        with self.assertRaises(ValidationError):
+            self.decision("approve", evidence_reviewed=False)
+        self.assertEqual(self.seller.status, "pending")
+        self.assertEqual(SellerReviewEvent.objects.count(), 0)
 
     def test_unverified_underage_attestation_and_disabled_accounts_are_rejected(self):
         self.applicant.email_verified_at = None
