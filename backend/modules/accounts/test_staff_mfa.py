@@ -1,4 +1,5 @@
 """MFA boundaries are mandatory for every privileged Admin and review action."""
+import io
 import uuid
 from unittest.mock import patch
 
@@ -130,6 +131,13 @@ class StaffMfaSecurityTests(APITestCase):
         endpoint = f"/api/v1/media/{asset.pk}/file/"
         self.client.force_login(self.staff)
         self.assertEqual(self.client.get(endpoint).status_code, 404)
+        # Even a privileged account needs the second factor to open evidence.
+        self.client.logout()
+        verify_staff_test_session(self.client, self.staff)
+        with patch("modules.media.views.read_object", return_value=b"fake-jpeg"):
+            valid = self.client.get(endpoint)
+        self.assertEqual(valid.status_code, 200)
+        self.assertEqual(valid["Cache-Control"], "private, no-store")
         self.client.logout()
 
         legacy = RefreshToken.for_user(self.staff)
@@ -141,6 +149,43 @@ class StaffMfaSecurityTests(APITestCase):
         code = str(totp(device.bin_key, step=device.step, t0=device.t0, digits=device.digits)).zfill(6)
         self.assertTrue(device.verify_token(code))
         self.assertFalse(device.verify_token(code))
+
+    def test_real_admin_login_uses_password_and_totp(self):
+        device = TOTPDevice.objects.create(
+            user=self.staff, name="Primary authenticator", confirmed=True,
+        )
+        code = str(totp(
+            device.bin_key, step=device.step, t0=device.t0, digits=device.digits
+        )).zfill(6)
+        authenticated = self.client.post("/admin/login/?next=/admin/", {
+            "username": self.staff.email,
+            "password": "LongStaffPassword!2026",
+            "otp_device": device.persistent_id,
+            "otp_token": code,
+            "next": "/admin/",
+        })
+        self.assertEqual(authenticated.status_code, 302)
+        self.assertEqual(self.client.get("/admin/").status_code, 200)
+
+    def test_bootstrap_confirms_new_device_only_after_code(self):
+        def current_code(prompt):
+            device = TOTPDevice.objects.get(user=self.staff, confirmed=False)
+            return str(totp(
+                device.bin_key, step=device.step, t0=device.t0, digits=device.digits
+            )).zfill(6)
+
+        with patch("sys.stdin.isatty", return_value=True), patch(
+            "sys.stdout.isatty", return_value=True
+        ), patch(
+            "modules.accounts.management.commands.bootstrap_staff_totp.getpass.getpass",
+            side_effect=current_code,
+        ):
+            output = io.StringIO()  # Never write the URI to CI logs.
+            call_command("bootstrap_staff_totp", email=self.staff.email, stdout=output)
+        self.assertEqual(TOTPDevice.objects.filter(
+            user=self.staff, confirmed=True
+        ).count(), 1)
+        self.assertIn("enrollment verified", output.getvalue())
 
     def test_bootstrap_command_requires_private_tty(self):
         with patch("sys.stdin.isatty", return_value=False):
