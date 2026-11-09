@@ -33,7 +33,7 @@ Updated 2026-11-06. Distinguishes working development code from unbuilt producti
 ### M1 recovery and authentication protection — PR #23
 
 - [PR #23](https://github.com/eghosa001/Animal-app/pull/23) **merged**: one-time 20-minute email recovery codes, hashed database storage, account/IP throttles, non-enumerating responses, password-validation rules, verification resend controls and audit events without secrets.
-- After successful reset, all previous access and refresh tokens are rejected, and outstanding refresh tokens are blacklisted. Staff MFA and explicit device/logout-all controls are **not** implemented.
+- After successful reset, all previous access and refresh tokens are rejected, and outstanding refresh tokens are blacklisted. At the time of PR #23, staff MFA and all-device logout were not implemented. They have since been added by PRs #25 and #26; device-specific controls remain outstanding.
 - Flutter has a Forgot password? journey with code/new-password validation and verification resend action.
 - [Backend CI](https://github.com/eghosa001/Animal-app/actions/runs/42276351500): Django checks/migrations, **57 tests + 4 subtests** passed. [Flutter & Android CI](https://github.com/eghosa001/Animal-app/actions/runs/42276351577): Flutter analysis, **11 widget tests**, Android debug APK compiled and uploaded.
 - [Account recovery operations guide](26-account-recovery.md) documents Redis/SMTP prerequisites. Real outbound SMTP, user-device testing and iOS Xcode validation remain unverified.
@@ -43,13 +43,14 @@ Updated 2026-11-06. Distinguishes working development code from unbuilt producti
 - Password-confirmed `/api/v1/auth/logout-all` endpoint and Flutter profile action provide immediate all-device JWT invalidation and audit, plus refresh-token ownership checks for ordinary logout.
 - Existing password remains unchanged for the user; its stored salted hash is rotated, so previously issued JWT password-revocation claims no longer match.
 - [PR #25](https://github.com/eghosa001/Animal-app/pull/25) merged. [Backend CI](https://github.com/eghosa001/Animal-app/actions/runs/42596845818): **63 tests and 4 subtests**, no migration drift; [Flutter CI](https://github.com/eghosa001/Animal-app/actions/runs/42596845794): **15 widget tests**, analyzer and Android APK successful. See [account-security runbook](26-account-recovery.md).
-- Device-by-device inventory/selective revocation and staff MFA remain unimplemented. Production SMS/email, cloud hosting and cross-device acceptance still require configuration and testing.
+- Device-by-device inventory/selective revocation remains unimplemented. Staff MFA code is merged under PR #26, but real administrator enrollment and cross-device acceptance still require configuration and testing.
 
-### Staff MFA enforcement — PR #26 (staging acceptance pending)
+### Staff MFA enforcement — PR #26 (CI-verified; staging acceptance pending)
 
 - Django Admin requires an OTP-verified session; seller, listing and media reviewer actions are permissioned behind this check.
 - Staff consumer JWT issuance, refresh and acceptance are blocked, including older bearer tokens. Private evidence requires staff OTP or object ownership.
 - First-device TOTP enrollment is a private interactive server command; see [staff MFA runbook](27-staff-mfa.md).
+- [PR #26](https://github.com/eghosa001/Animal-app/pull/26) **merged**. [Combined-branch CI](https://github.com/eghosa001/Animal-app/actions/runs/42598245974) and [post-merge main CI](https://github.com/eghosa001/Animal-app/actions/runs/42598475720) each passed Django system/migration checks, **74 tests + 4 subtests** on PostgreSQL.
 - Real operator enrollment, time-drift testing, account recovery drill and production monitoring remain outstanding.
 
 ## M1 remains open — critical blockers

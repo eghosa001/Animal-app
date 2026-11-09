@@ -39,7 +39,7 @@ Priority legend:
 | Notifications | In-app/push delivery, preference/quiet settings, retry and notification deep links | P0 | Not implemented |
 | Customer service | Support entry, ticket ownership, privacy-safe case notes, urgent animal safety escalation | P0 | Not implemented |
 | Reviews | Buyer reviews tied to qualifying completed orders; dispute/fraud protection | P0 for seller trust if shown; P1 for richer analytics | Not implemented |
-| Admin | RBAC, staff MFA, moderation and financial separation of duties, audit/search queues | P0 | Partial: Django Admin and seller review only |
+| Admin | RBAC, staff MFA, moderation and financial separation of duties, audit/search queues | P0 | Partial: OTP-gated Django Admin, staff seller/photo moderation and recorded review decisions (PR #26); real MFA enrollment, full queues and finance separation not delivered |
 | Privacy/compliance | NDPA applicability review, legal terms, consent, retention, export/deletion and processor inventory | P0 | Documented only |
 | Reliability | Encrypted backups/restore drills, alerts, slow-query monitoring, rollout/rollback, health checks | P0 | Partial: local health and CI only |
 | Mobile quality | Real Android/iOS native builds, accessibility, offline/error states, low-bandwidth UX, crash monitoring | P0 | Partial: Flutter seller image picker/upload and marketplace photo thumbnails pass widget tests and Android debug build; not iOS/device acceptance |
