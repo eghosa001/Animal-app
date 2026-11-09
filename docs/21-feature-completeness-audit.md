@@ -19,7 +19,7 @@ Priority legend:
 
 | Domain | Production scope and quality expectations | Priority | Current code |
 |---|---|---|---|
-| Identity | Email account, verified contact, login, account recovery, sessions, logout and abuse controls | P0 | Partial: JWT, hashed emailed recovery codes, resend/rate controls and password-change token revocation tested in PR #23; live email delivery, MFA, selective device-session inventory and deletion incomplete; logout-all action pending CI |
+| Identity | Email account, verified contact, login, account recovery, sessions, logout and abuse controls | P0 | Partial: JWT, hashed emailed recovery codes, resend/rate controls and password-change token revocation tested in PR #23; live email delivery, MFA, selective device-session inventory and deletion incomplete; all-device revocation was CI-tested in PR #25 |
 | Seller trust | Adult eligibility, business/individual checks, case evidence, audited staff decisions, suspension and appeals | P0 | Partial: audited manual approval, suspension, and private JPEG/PNG evidence upload; external KYC and PDF scanning not connected |
 | Animal policy | Species and territorial trade allowlists, prohibited wildlife, minimum welfare conditions, licenses | P0 | Partial: default-disabled species catalogue; rules/legal signoff missing |
 | Animal record | Identity, age, sex, species, breed, source, health/document provenance | P0 | Partial: basic Animal model only |

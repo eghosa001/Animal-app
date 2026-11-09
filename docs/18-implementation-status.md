@@ -38,12 +38,12 @@ Updated 2026-11-06. Distinguishes working development code from unbuilt producti
 - [Backend CI](https://github.com/eghosa001/Animal-app/actions/runs/42276351500): Django checks/migrations, **57 tests + 4 subtests** passed. [Flutter & Android CI](https://github.com/eghosa001/Animal-app/actions/runs/42276351577): Flutter analysis, **11 widget tests**, Android debug APK compiled and uploaded.
 - [Account recovery operations guide](26-account-recovery.md) documents Redis/SMTP prerequisites. Real outbound SMTP, user-device testing and iOS Xcode validation remain unverified.
 
-### M1 session revocation — implementation PR pending acceptance
+### M1 session revocation — PR #25, merged and CI-tested
 
 - Password-confirmed `/api/v1/auth/logout-all` endpoint and Flutter profile action provide immediate all-device JWT invalidation and audit, plus refresh-token ownership checks for ordinary logout.
 - Existing password remains unchanged for the user; its stored salted hash is rotated, so previously issued JWT password-revocation claims no longer match.
-- Regression tests and [account-security runbook](26-account-recovery.md) cover the scope. **Do not label verified/merged until the PR's PostgreSQL, Flutter and Android CI checks pass.**
-- Device-by-device inventory/selective revocation and staff MFA remain unimplemented.
+- [PR #25](https://github.com/eghosa001/Animal-app/pull/25) merged. [Backend CI](https://github.com/eghosa001/Animal-app/actions/runs/42596845818): **63 tests and 4 subtests**, no migration drift; [Flutter CI](https://github.com/eghosa001/Animal-app/actions/runs/42596845794): **15 widget tests**, analyzer and Android APK successful. See [account-security runbook](26-account-recovery.md).
+- Device-by-device inventory/selective revocation and staff MFA remain unimplemented. Production SMS/email, cloud hosting and cross-device acceptance still require configuration and testing.
 
 ## M1 remains open — critical blockers
 
