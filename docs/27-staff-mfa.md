@@ -1,6 +1,6 @@
 # Staff authenticator MFA — Admin and moderation security
 
-**Implemented in PR #26 — staging approval and post-merge verification are separate release gates.** This security improvement is not a claim that all operational security or client identity verification is finished.
+**Implemented and merged in [PR #26](https://github.com/eghosa001/Animal-app/pull/26).** The [combined branch tests](https://github.com/eghosa001/Animal-app/actions/runs/42598245974) and [post-merge tests](https://github.com/eghosa001/Animal-app/actions/runs/42598475720) passed **74 tests + 4 subtests** with PostgreSQL, Django migration validation and lint. Staging operator enrollment and real-device acceptance remain separate release gates. This security improvement is not a claim that all operational security or client identity verification is finished.
 
 ## Why
 
