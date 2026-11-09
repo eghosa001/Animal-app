@@ -132,6 +132,7 @@ class AccountSecurityEvent(models.Model):
         PASSWORD_RESET_ISSUED = "reset_issued", "Recovery challenge issued"
         PASSWORD_RESET_COMPLETED = "reset_completed", "Password changed using recovery"
         VERIFICATION_RESENT = "verify_resent", "Verification code resent"
+        ALL_SESSIONS_REVOKED = "all_revoked", "All account sessions revoked"
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="security_events")
     event = models.CharField(max_length=20, choices=Event.choices)

@@ -88,6 +88,7 @@ REST_FRAMEWORK = {
         "auth_resend": "5/hour",
         "auth_password_request": "5/hour",
         "auth_password_confirm": "12/hour",
+        "auth_logout_all": "5/hour",
     },
 }
 # Shared Redis throttling is mandatory outside debug. In-process cache is
