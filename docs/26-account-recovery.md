@@ -53,7 +53,9 @@ Any missing CI or real-device evidence remains a separate blocker, not a complet
 
 References: [Simple JWT revoke settings](https://django-rest-framework-simplejwt.readthedocs.io/en/stable/settings.html) and [OWASP Forgot Password Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html).
 
-## Revoke all sessions (new M1 security slice; PR in review)
+## Revoke all sessions (M1 development feature verified on 2026-11-09)
+
+[PR #25](https://github.com/eghosa001/Animal-app/pull/25) has merged. Its [backend CI](https://github.com/eghosa001/Animal-app/actions/runs/42596845818) passed **63 tests and 4 subtests** with migration checks; [Flutter/Android CI](https://github.com/eghosa001/Animal-app/actions/runs/42596845794) passed analyzer, **15 widget tests**, and Android debug APK compilation. No physical-device, iOS or production-account run has been performed.
 
 **Endpoint:** `POST /api/v1/auth/logout-all` using a valid Bearer access token and JSON body `{"current_password":"..."}`. Requires the account's **existing password**, returns `204 No Content` on success. Missing/wrong password returns `400`; no access token returns `401`. This cannot act on another user's account and is throttled to 5 attempts/hour per authenticated user.
 

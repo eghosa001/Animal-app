@@ -1,6 +1,6 @@
 # Animal Platform
 
-**Status:** Active development. M0 and selected M1 modules (audited seller review, private media, Flutter animal draft listings and email account recovery) have merged with automated tests. No production deployment, payment processor, escrow service, or live cloud infrastructure has been provisioned.
+**Status:** Active development. M0 and selected M1 modules (audited seller review, private media, Flutter animal draft listings, email account recovery and all-device session revocation) have merged with automated tests. No production deployment, payment processor, escrow service, or live cloud infrastructure has been provisioned.
 
 Cross-platform (Android + iOS) animal-only social and marketplace platform with verified seller profiles, animal listings, short video and photo posts, messaging, structured offers, and delivery-aware **partner-managed** protected payments.
 
