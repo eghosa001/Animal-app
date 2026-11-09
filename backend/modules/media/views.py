@@ -83,6 +83,7 @@ class MediaFileView(APIView):
             reviewer = (
                 user.is_authenticated and user.is_active and user.is_staff
                 and user.has_perm("accounts.review_sellerprofile")
+                and callable(getattr(user, "is_verified", None)) and user.is_verified()
             )
             if not owner and not reviewer:
                 raise Http404()
@@ -91,6 +92,7 @@ class MediaFileView(APIView):
             moderator = (
                 user.is_authenticated and user.is_active and user.is_staff
                 and user.has_perm("animal_media.review_mediaasset")
+                and callable(getattr(user, "is_verified", None)) and user.is_verified()
             )
             seller_profile = getattr(asset.listing.seller, "seller_profile", None)
             public = (

@@ -34,6 +34,9 @@ class StaffMfaSecurityTests(APITestCase):
             content_type__app_label="accounts", codename="review_sellerprofile"
         ))
         self.staff.user_permissions.add(Permission.objects.get(
+            content_type__app_label="accounts", codename="view_sellerprofile"
+        ))
+        self.staff.user_permissions.add(Permission.objects.get(
             content_type__app_label="animal_media", codename="review_mediaasset"
         ))
 
