@@ -9,3 +9,4 @@ gunicorn>=23,<24
 uvicorn[standard]>=0.34,<1
 Pillow>=12.2,<13
 boto3>=1.40,<2
+django-otp>=1.7.5,<1.8
