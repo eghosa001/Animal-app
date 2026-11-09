@@ -434,6 +434,36 @@ class ApiClient {
     return raw.map((item) => AnimalListing.fromJson(item as Map<String, dynamic>)).toList();
   }
 
+  /// Revoke every existing access and refresh session after password confirmation.
+  /// Clear this phone only after the server confirms revocation; never report
+  /// success on an HTTP error or network failure.
+  Future<void> logoutAll(String currentPassword) async {
+    Future<http.Response> send(String access) => _post(
+      '/api/v1/auth/logout-all',
+      {'current_password': currentPassword},
+      token: access,
+    );
+
+    var access = await _storage.read(key: 'anima_access');
+    if (access == null) {
+      throw const ApiFailure('Please sign in to manage account sessions');
+    }
+    var response = await send(access);
+    if (response.statusCode == 401) {
+      access = await _refresh();
+      if (access == null) {
+        throw const ApiFailure('Session expired. Sign in again.');
+      }
+      response = await send(access);
+    }
+    if (response.statusCode != 204) {
+      _decode(response);
+      throw const ApiFailure('Could not sign out other devices');
+    }
+    await _storage.delete(key: 'anima_access');
+    await _storage.delete(key: 'anima_refresh');
+  }
+
   Future<void> logout() async {
     final refresh = await _storage.read(key: 'anima_refresh');
     final access = await _storage.read(key: 'anima_access');
