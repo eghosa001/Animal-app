@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'core/api_client.dart';
 import 'password_recovery_page.dart';
+import 'revoke_sessions_page.dart';
 import 'seller_media_page.dart';
 import 'seller_listings_page.dart';
 
@@ -489,6 +490,24 @@ class _AccountPageState extends State<AccountPage> {
               label: const Text('Upload animal photos or verification'),
             ),
           ],
+          OutlinedButton.icon(
+            onPressed: _busy ? null : () async {
+              final revoked = await Navigator.of(context).push<bool>(
+                MaterialPageRoute<bool>(
+                  builder: (context) => RevokeSessionsPage(api: widget.api),
+                ),
+              );
+              if (revoked == true && mounted) {
+                setState(() {
+                  _profile = null;
+                  _password.clear();
+                  _message = 'Signed out of all devices. Sign in again to continue.';
+                });
+              }
+            },
+            icon: const Icon(Icons.phonelink_lock_outlined),
+            label: const Text('Sign out on all devices'),
+          ),
           OutlinedButton(
             onPressed: _busy ? null : () => _act(() async {
               await widget.api.logout();

@@ -190,3 +190,31 @@ def resend_email_verification(email):
     except (OSError, smtplib.SMTPException) as exc:
         logger.error("Anima verification mail failed (%s)", type(exc).__name__)
         return
+
+
+@transaction.atomic
+def revoke_all_account_sessions(*, actor, current_password):
+    """Invalidate access and refresh JWTs for this account immediately.
+
+    Simple JWT CHECK_REVOKE_TOKEN is already enabled. Rehashing the user's
+    *verified existing password* with a new random salt changes its stored hash,
+    invalidating every previously issued password-derived JWT claim without
+    changing the password users type. No new access/refresh tokens are returned.
+    """
+    if not actor.is_authenticated or not actor.is_active:
+        raise ValidationError({"detail": ["Authentication required"]})
+    user = User.objects.select_for_update().get(pk=actor.pk, is_active=True)
+    if not user.check_password(current_password):
+        raise ValidationError({"current_password": ["Incorrect password"]})
+
+    # Rehash with a new randomized salt. No plaintext password persists.
+    user.set_password(current_password)
+    user.save(update_fields=["password"])
+    now = timezone.now()
+    for issued in OutstandingToken.objects.filter(user=user, expires_at__gt=now):
+        BlacklistedToken.objects.get_or_create(token=issued)
+    AccountSecurityEvent.objects.create(
+        user=user,
+        event=AccountSecurityEvent.Event.ALL_SESSIONS_REVOKED,
+    )
+    return user

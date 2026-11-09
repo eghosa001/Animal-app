@@ -52,3 +52,17 @@ The PostgreSQL regression gate verifies: valid delivery, hashed code, generic un
 Any missing CI or real-device evidence remains a separate blocker, not a completed production check.
 
 References: [Simple JWT revoke settings](https://django-rest-framework-simplejwt.readthedocs.io/en/stable/settings.html) and [OWASP Forgot Password Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html).
+
+## Revoke all sessions (new M1 security slice; PR in review)
+
+**Endpoint:** `POST /api/v1/auth/logout-all` using a valid Bearer access token and JSON body `{"current_password":"..."}`. Requires the account's **existing password**, returns `204 No Content` on success. Missing/wrong password returns `400`; no access token returns `401`. This cannot act on another user's account and is throttled to 5 attempts/hour per authenticated user.
+
+**Server behaviour:** Within an atomic PostgreSQL transaction, the user row is locked and the existing password checked. The verified password is **rehashed with a new random salt** without changing what the person types. Because Simple JWT's `CHECK_REVOKE_TOKEN` checks the stored password hash, all previously issued access JWTs fail immediately. The service also blacklists all unexpired outstanding refresh tokens and records an `AccountSecurityEvent` without the password or tokens. This changes the stored hash (and therefore invalidates Django login sessions), but does not replace the user's actual password.
+
+**Ordinary logout hardening:** `POST /api/v1/auth/logout` now checks that the supplied refresh token belongs to the same authenticated user before blacklisting it; owning one access token must not permit revoking another account's refresh token.
+
+**Flutter:** Profile → **Sign out on all devices** → enter existing password → confirm. The app only clears its own secure access/refresh tokens after HTTP 204 from the server. Wrong passwords or outages retain the session and display an error. The user can then sign in again with the same password. No known list of devices is stored or shown, because device-aware session registration has **not yet been designed or implemented**.
+
+**Rollout:** Apply `accounts.0004_add_all_sessions_revoked_event` migration before enabling this endpoint. No changes to the token format are required. Keep all production traffic over HTTPS and protect staff accounts with an MFA gate in a separate release. Existing app tokens should be invalidated on a staging account using two independent devices or sessions as a manual acceptance test, including an older access token and a rotated refresh token.
+
+**Acceptance:** Regression tests must prove multiple access/refresh JWTs are all revoked, login with unchanged password still works, wrong password and unauthenticated calls cannot revoke, other accounts remain online, and the ordinary logout endpoint rejects another account's refresh token. CI must pass lint/migrations/PostgreSQL tests, Flutter widget tests, and Android APK build. This is **not** completed device-level session management, MFA, production SMTP or real iOS acceptance.

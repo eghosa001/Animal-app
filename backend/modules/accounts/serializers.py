@@ -74,3 +74,8 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 
     def validate_email(self, value):
         return value.strip().lower()
+
+class RevokeAllSessionsSerializer(serializers.Serializer):
+    current_password = serializers.CharField(
+        min_length=1, max_length=128, write_only=True, trim_whitespace=False
+    )
