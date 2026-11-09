@@ -65,7 +65,7 @@ void main() {
       home: Builder(builder: (context) {
         return Scaffold(body: Center(child: FilledButton(
           onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(
+            MaterialPageRoute<bool>(
               builder: (context) => RevokeSessionsPage(api: api),
             ),
           ),
