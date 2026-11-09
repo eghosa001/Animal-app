@@ -1,6 +1,6 @@
 # Staff authenticator MFA — Admin and moderation security
 
-**Implemented in PR #25 — status requires CI and post-merge verification.** This security improvement is not a claim that all operational security or client identity verification is finished.
+**Implemented in PR #26 — staging approval and post-merge verification are separate release gates.** This security improvement is not a claim that all operational security or client identity verification is finished.
 
 ## Why
 
