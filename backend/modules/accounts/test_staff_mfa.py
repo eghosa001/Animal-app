@@ -1,5 +1,4 @@
 """MFA boundaries are mandatory for every privileged Admin and review action."""
-import io
 import uuid
 from unittest.mock import patch
 
@@ -9,7 +8,6 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import override_settings
 from django.utils import timezone
-from django_otp import DEVICE_ID_SESSION_KEY
 from django_otp.oath import totp
 from django_otp.plugins.otp_totp.models import TOTPDevice
 from rest_framework.test import APITestCase
