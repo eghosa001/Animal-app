@@ -38,13 +38,27 @@ Updated 2026-11-06. Distinguishes working development code from unbuilt producti
 - [Backend CI](https://github.com/eghosa001/Animal-app/actions/runs/42276351500): Django checks/migrations, **57 tests + 4 subtests** passed. [Flutter & Android CI](https://github.com/eghosa001/Animal-app/actions/runs/42276351577): Flutter analysis, **11 widget tests**, Android debug APK compiled and uploaded.
 - [Account recovery operations guide](26-account-recovery.md) documents Redis/SMTP prerequisites. Real outbound SMTP, user-device testing and iOS Xcode validation remain unverified.
 
+### M1 session revocation — implementation PR pending acceptance
+
+- Password-confirmed `/api/v1/auth/logout-all` endpoint and Flutter profile action provide immediate all-device JWT invalidation and audit, plus refresh-token ownership checks for ordinary logout.
+- Existing password remains unchanged for the user; its stored salted hash is rotated, so previously issued JWT password-revocation claims no longer match.
+- Regression tests and [account-security runbook](26-account-recovery.md) cover the scope. **Do not label verified/merged until the PR's PostgreSQL, Flutter and Android CI checks pass.**
+- Device-by-device inventory/selective revocation and staff MFA remain unimplemented.
+
+### Staff MFA enforcement — PR #26 (staging acceptance pending)
+
+- Django Admin requires an OTP-verified session; seller, listing and media reviewer actions are permissioned behind this check.
+- Staff consumer JWT issuance, refresh and acceptance are blocked, including older bearer tokens. Private evidence requires staff OTP or object ownership.
+- First-device TOTP enrollment is a private interactive server command; see [staff MFA runbook](27-staff-mfa.md).
+- Real operator enrollment, time-drift testing, account recovery drill and production monitoring remain outstanding.
+
 ## M1 remains open — critical blockers
 
 1. Cloudflare R2 real-account, private-bucket staging integration and authorized staff access audit on live infrastructure.
 2. Private evidence legal basis, retention/deletion, malware scanning/PDF support and identity verification policies/provider choice.
 3. Species-specific health, welfare, age, region and trading restrictions approved by responsible professionals, with verifiable records and source provenance.
 4. Real-device Android and iOS end-to-end tests with production-like HTTPS backend and actual customer flows.
-5. Account recovery is now implemented and CI-tested; production transactional SMTP, staff MFA, full session/device management, live device tests, marketplace search, listing lifecycle and customer support remain outstanding.
+5. Account recovery is now implemented and CI-tested; production transactional SMTP, staff MFA operator enrollment, selective device/session management, live device tests, marketplace search, listing lifecycle and customer support remain outstanding.
 
 **Not yet implemented:** social videos/feed, contextual chat, structured negotiation, order/ledger/regulated protected payments, animal delivery, refunds/disputes, production moderation/support dashboard, push notifications, production hosting, native iOS release and app store publication.
 

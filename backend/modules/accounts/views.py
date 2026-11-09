@@ -7,18 +7,19 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .authentication import CustomerTokenObtainPairSerializer, CustomerTokenRefreshSerializer
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
+
+from .authentication import CustomerTokenObtainPairSerializer, CustomerTokenRefreshSerializer
 
 from .models import SellerProfile, User
 from .serializers import (
     MeSerializer, PasswordResetConfirmSerializer, PasswordResetRequestSerializer,
-    RegisterSerializer, SellerApplySerializer, SellerSerializer,
+    RegisterSerializer, RevokeAllSessionsSerializer, SellerApplySerializer, SellerSerializer,
 )
 from .services import (
     issue_email_verification, redeem_email_verification, redeem_password_reset,
-    request_password_reset, resend_email_verification,
+    request_password_reset, resend_email_verification, revoke_all_account_sessions,
 )
 
 
@@ -118,9 +119,28 @@ class LogoutView(APIView):
         if not token:
             raise ValidationError({"refresh": ["Refresh token is required"]})
         try:
-            RefreshToken(token).blacklist()
+            refresh = RefreshToken(token)
+            # Never let an authenticated account revoke another account's token.
+            if str(refresh.get("user_id", "")) != str(request.user.pk):
+                raise ValidationError({"refresh": ["Token does not belong to this account"]})
+            refresh.blacklist()
         except TokenError as exc:
             raise ValidationError({"refresh": ["Invalid refresh token"]}) from exc
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class LogoutAllView(APIView):
+    permission_classes = (IsAuthenticated,)
+    throttle_classes = (ScopedRateThrottle,)
+    throttle_scope = "auth_logout_all"
+
+    def post(self, request):
+        serializer = RevokeAllSessionsSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        revoke_all_account_sessions(
+            actor=request.user,
+            current_password=serializer.validated_data["current_password"],
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

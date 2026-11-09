@@ -92,6 +92,7 @@ REST_FRAMEWORK = {
         "auth_resend": "5/hour",
         "auth_password_request": "5/hour",
         "auth_password_confirm": "12/hour",
+        "auth_logout_all": "5/hour",
     },
 }
 # Shared Redis throttling is mandatory outside debug. In-process cache is
@@ -160,8 +161,6 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 2 * 1024 * 1024
 DATA_UPLOAD_MAX_MEMORY_SIZE = 1 * 1024 * 1024
 REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["media_upload"] = "20/hour"
 
-# Authenticator-based staff access is enforced by SecureAdminSite and the
-# staff-only API boundaries. The app never ships the TOTP secret to Flutter.
+# Staff Admin and review actions require a verified OTP session.
 OTP_TOTP_ISSUER = "Anima Staff"
-# Disable automatic drift adjustment; exact drift management should be explicit.
 OTP_TOTP_SYNC = False
