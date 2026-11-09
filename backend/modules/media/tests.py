@@ -12,6 +12,7 @@ from PIL import Image
 from rest_framework.test import APITestCase
 
 from modules.accounts.models import SellerProfile, User
+from modules.accounts.staff_auth_test_utils import verify_staff_test_session
 from modules.catalog.models import Species
 from modules.listings.models import Animal, Listing
 
@@ -123,7 +124,7 @@ class PrivateMediaApiTests(APITestCase):
     def test_photo_approval_visibility_and_seller_suspension(self):
         result = self.upload_photo()
         asset = MediaAsset.objects.get(pk=result.data["id"])
-        self.client.force_authenticate(user=self.reviewer)
+        verify_staff_test_session(self.client, self.reviewer)
         approval = self.client.post(f"/api/v1/media/{asset.id}/review/", {
             "decision": "approve", "reason": "Image was inspected and matches platform content rules.",
         }, format="json")
@@ -177,7 +178,7 @@ class PrivateMediaApiTests(APITestCase):
         self.assertEqual(self.client.get(uri).status_code, 404)
         self.client.force_authenticate(user=self.reviewer)
         self.assertEqual(self.client.get(uri).status_code, 404)  # Media reviewer != KYC reviewer.
-        self.client.force_authenticate(user=self.identity_reviewer)
+        verify_staff_test_session(self.client, self.identity_reviewer)
         allowed = self.client.get(uri)
         self.assertEqual(allowed.status_code, 200)
         self.assertIn("attachment;", allowed["Content-Disposition"])
@@ -241,7 +242,7 @@ class PrivateMediaApiTests(APITestCase):
         self.assertEqual(self.client.post(uri, {
             "decision": "approve", "reason": "My permission must not allow photo moderation.",
         }, format="json").status_code, 403)
-        self.client.force_authenticate(user=self.reviewer)
+        verify_staff_test_session(self.client, self.reviewer)
         self.species.trade_enabled = False
         self.species.save(update_fields=["trade_enabled"])
         self.assertEqual(self.client.post(uri, {
@@ -264,8 +265,7 @@ class PrivateMediaApiTests(APITestCase):
     def test_django_admin_session_access_to_seller_evidence_is_audited(self):
         self.upload_evidence()
         asset = MediaAsset.objects.get(kind=MediaAsset.Kind.SELLER_EVIDENCE)
-        self.client.force_authenticate(user=None)
-        self.client.force_login(self.identity_reviewer)
+        verify_staff_test_session(self.client, self.identity_reviewer)
         file_response = self.client.get(f"/api/v1/media/{asset.pk}/file/")
         self.assertEqual(file_response.status_code, 200)
         self.assertEqual(MediaAccessEvent.objects.count(), 1)
@@ -282,10 +282,11 @@ class PrivateMediaApiTests(APITestCase):
         profile.status = SellerProfile.Status.APPROVED
         profile.save(update_fields=["status"])
         url = reverse("admin:animal_media_mediaasset_review", args=[asset.pk])
-        self.client.force_authenticate(user=None)
-        self.client.force_login(self.identity_reviewer)
+        verify_staff_test_session(self.client, self.identity_reviewer)
         self.assertEqual(self.client.get(url).status_code, 403)
         self.client.force_login(self.reviewer)
+        self.assertEqual(self.client.get(url).status_code, 302)
+        verify_staff_test_session(self.client, self.reviewer)
         self.assertEqual(self.client.get(url).status_code, 200)
         decision = self.client.post(url, {
             "decision": "approve",

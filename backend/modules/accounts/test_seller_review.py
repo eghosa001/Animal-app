@@ -9,6 +9,7 @@ from modules.catalog.models import Species
 from modules.listings.models import Animal, Listing, ListingEvent
 
 from .forms import SellerReviewForm
+from .staff_auth_test_utils import verify_staff_test_session
 from .models import SellerProfile, SellerReviewEvent, User
 from .review_service import review_seller
 
@@ -230,10 +231,13 @@ class SellerReviewTests(APITestCase):
             email="read-only@example.com", password="ReadOnly!2026",
             display_name="Read Only", is_staff=True,
         )
-        self.client.force_login(unauthorized_staff)
+        verify_staff_test_session(self.client, unauthorized_staff)
         self.assertEqual(self.client.get(url).status_code, 403)
 
         self.client.force_login(self.reviewer)
+        # A privileged password-only session cannot enter the seller review.
+        self.assertEqual(self.client.get(url).status_code, 302)
+        verify_staff_test_session(self.client, self.reviewer)
         page = self.client.get(url)
         self.assertEqual(page.status_code, 200)
         self.assertContains(page, "Review seller application")
