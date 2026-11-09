@@ -26,7 +26,9 @@ class _RevokeSessionsPageState extends State<RevokeSessionsPage> {
   }
 
   Future<void> _revoke() async {
-    if (_busy) return;
+    if (_busy) {
+      return;
+    }
     if (_password.text.isEmpty) {
       setState(() => _error = 'Enter your current password to continue.');
       return;
@@ -53,7 +55,9 @@ class _RevokeSessionsPageState extends State<RevokeSessionsPage> {
         ],
       ),
     );
-    if (confirmed != true || !mounted) return;
+    if (confirmed != true || !mounted) {
+      return;
+    }
     setState(() {
       _busy = true;
       _error = '';
@@ -65,12 +69,18 @@ class _RevokeSessionsPageState extends State<RevokeSessionsPage> {
         Navigator.of(context).pop(true);
       }
     } on ApiFailure catch (error) {
-      if (mounted) setState(() => _error = error.message);
+      if (mounted) {
+        setState(() => _error = error.message);
+      }
     } catch (_) {
-      if (mounted) setState(() => _error =
-          'Unable to reach the server. Other sessions were not confirmed revoked.');
+      if (mounted) {
+        setState(() => _error =
+            'Unable to reach the server. Other sessions were not confirmed revoked.');
+      }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) {
+        setState(() => _busy = false);
+      }
     }
   }
 
