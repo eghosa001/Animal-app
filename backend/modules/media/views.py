@@ -3,7 +3,7 @@ from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
-from rest_framework_simplejwt.authentication import JWTAuthentication
+from modules.accounts.authentication import CustomerJWTAuthentication, require_staff_mfa
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -67,7 +67,7 @@ class MyMediaView(APIView):
 class MediaFileView(APIView):
     permission_classes = (AllowAny,)
     # Staff using Django Admin session cookies must be able to read assigned evidence.
-    authentication_classes = (JWTAuthentication, SessionAuthentication)
+    authentication_classes = (CustomerJWTAuthentication, SessionAuthentication)
 
     def get(self, request, asset_id):
         asset = get_object_or_404(
@@ -83,6 +83,7 @@ class MediaFileView(APIView):
             reviewer = (
                 user.is_authenticated and user.is_active and user.is_staff
                 and user.has_perm("accounts.review_sellerprofile")
+                and callable(getattr(user, "is_verified", None)) and user.is_verified()
             )
             if not owner and not reviewer:
                 raise Http404()
@@ -91,6 +92,7 @@ class MediaFileView(APIView):
             moderator = (
                 user.is_authenticated and user.is_active and user.is_staff
                 and user.has_perm("animal_media.review_mediaasset")
+                and callable(getattr(user, "is_verified", None)) and user.is_verified()
             )
             seller_profile = getattr(asset.listing.seller, "seller_profile", None)
             public = (
@@ -120,9 +122,12 @@ class MediaFileView(APIView):
 
 
 class MediaReviewView(APIView):
+    # Human moderation never accepts app JWT, including older staff JWTs.
+    authentication_classes = (SessionAuthentication,)
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, asset_id):
+        require_staff_mfa(request.user)
         serializer = MediaReviewSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         asset = get_object_or_404(

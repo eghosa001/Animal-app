@@ -35,6 +35,7 @@ Cross-platform (Android + iOS) animal-only social and marketplace platform with 
 | [Private media setup and threat controls](docs/24-media-upload-runbook.md) | Tested backend private photos/evidence API, staff review, local/R2 configuration |
 | [Seller listing workflow](docs/25-seller-listing-workflow.md) | Private draft create/edit, photo gallery, eligibility and moderation gates |
 | [Account recovery and throttling](docs/26-account-recovery.md) | Single-use recovery codes, JWT revocation, anti-abuse, SMTP/Redis setup and remaining gates |
+| [Staff authenticator MFA](docs/27-staff-mfa.md) | OTP-gated Admin, review permissions, private device enrollment and recovery procedures |
 
 ## Feature-readiness notice
 
@@ -90,6 +91,6 @@ For local verification emails, check the Django console output; **never use cons
 
 ## Next implementation gate
 
-Account password recovery is now implemented in Django and Flutter (PR #23), including session revocation and verification resend limits. However a real SMTP service and physical Android/iOS testing remain pending, and staff MFA/device management is not yet done.
+Account password recovery is now implemented in Django and Flutter (PR #23), including session revocation and verification resend limits. However a real SMTP service and physical Android/iOS testing remain pending, and staff MFA code is added in PR #26; real operator enrollment and staging acceptance are still pending.
 
 The Flutter individual-animal draft creation/editing and photo gallery workflow is now implemented and CI-tested. **Next:** validate real R2 private-bucket staging, evidence retention/deletion, species and welfare policy, health provenance requirements, and physical Android/iOS end-to-end behaviour before considering public release. No live payments are enabled or assumed.

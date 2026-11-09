@@ -45,13 +45,20 @@ Updated 2026-11-06. Distinguishes working development code from unbuilt producti
 - [PR #25](https://github.com/eghosa001/Animal-app/pull/25) merged. [Backend CI](https://github.com/eghosa001/Animal-app/actions/runs/42596845818): **63 tests and 4 subtests**, no migration drift; [Flutter CI](https://github.com/eghosa001/Animal-app/actions/runs/42596845794): **15 widget tests**, analyzer and Android APK successful. See [account-security runbook](26-account-recovery.md).
 - Device-by-device inventory/selective revocation and staff MFA remain unimplemented. Production SMS/email, cloud hosting and cross-device acceptance still require configuration and testing.
 
+### Staff MFA enforcement — PR #26 (staging acceptance pending)
+
+- Django Admin requires an OTP-verified session; seller, listing and media reviewer actions are permissioned behind this check.
+- Staff consumer JWT issuance, refresh and acceptance are blocked, including older bearer tokens. Private evidence requires staff OTP or object ownership.
+- First-device TOTP enrollment is a private interactive server command; see [staff MFA runbook](27-staff-mfa.md).
+- Real operator enrollment, time-drift testing, account recovery drill and production monitoring remain outstanding.
+
 ## M1 remains open — critical blockers
 
 1. Cloudflare R2 real-account, private-bucket staging integration and authorized staff access audit on live infrastructure.
 2. Private evidence legal basis, retention/deletion, malware scanning/PDF support and identity verification policies/provider choice.
 3. Species-specific health, welfare, age, region and trading restrictions approved by responsible professionals, with verifiable records and source provenance.
 4. Real-device Android and iOS end-to-end tests with production-like HTTPS backend and actual customer flows.
-5. Account recovery is now implemented and CI-tested; production transactional SMTP, staff MFA, full session/device management, live device tests, marketplace search, listing lifecycle and customer support remain outstanding.
+5. Account recovery is now implemented and CI-tested; production transactional SMTP, staff MFA operator enrollment, selective device/session management, live device tests, marketplace search, listing lifecycle and customer support remain outstanding.
 
 **Not yet implemented:** social videos/feed, contextual chat, structured negotiation, order/ledger/regulated protected payments, animal delivery, refunds/disputes, production moderation/support dashboard, push notifications, production hosting, native iOS release and app store publication.
 

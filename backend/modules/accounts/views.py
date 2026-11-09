@@ -10,6 +10,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from .authentication import CustomerTokenObtainPairSerializer, CustomerTokenRefreshSerializer
+
 from .models import SellerProfile, User
 from .serializers import (
     MeSerializer, PasswordResetConfirmSerializer, PasswordResetRequestSerializer,
@@ -22,11 +24,13 @@ from .services import (
 
 
 class LoginView(TokenObtainPairView):
+    serializer_class = CustomerTokenObtainPairSerializer
     throttle_classes = (ScopedRateThrottle,)
     throttle_scope = "auth_login"
 
 
 class RefreshView(TokenRefreshView):
+    serializer_class = CustomerTokenRefreshSerializer
     throttle_classes = (ScopedRateThrottle,)
     throttle_scope = "auth_refresh"
 
