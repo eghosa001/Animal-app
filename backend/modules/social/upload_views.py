@@ -9,6 +9,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import serializers, status
+from rest_framework.generics import ListAPIView
 from rest_framework.exceptions import PermissionDenied, Throttled, ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -129,3 +130,39 @@ class StreamWebhookView(APIView):
                     post.save(update_fields=("processed_at", "processing_error"))
             # Upload completion changes processing state only, never public approval.
         return HttpResponse(status=204)
+
+
+class VideoUploadCapabilitiesView(APIView):
+    """Public feature flag prevents wasted video selection in disabled environments."""
+    permission_classes = (AllowAny,)
+    authentication_classes = ()
+
+    def get(self, request):
+        return Response({
+            "enabled": bool(settings.STREAM_UPLOADS_ENABLED),
+            "max_duration_seconds": 60,
+            "max_file_bytes": 200_000_000,
+        })
+
+
+class MyVideoStatusSerializer(serializers.ModelSerializer):
+    processed = serializers.SerializerMethodField()
+
+    class Meta:
+        model = VideoPost
+        fields = ("id", "caption", "state", "processed", "created_at")
+        read_only_fields = fields
+
+    def get_processed(self, obj):
+        return obj.processed_at is not None
+
+
+class MyVideoPostsView(ListAPIView):
+    """Private, per-owner processing status, never provider UID or upload token."""
+    permission_classes = (IsAuthenticated,)
+    serializer_class = MyVideoStatusSerializer
+
+    def get_queryset(self):
+        return VideoPost.objects.filter(
+            creator=self.request.user,
+        ).order_by("-created_at", "-id")
