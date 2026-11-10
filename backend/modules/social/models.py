@@ -73,6 +73,8 @@ class VideoReviewEvent(models.Model):
     previous_state = models.CharField(max_length=12)
     new_state = models.CharField(max_length=12)
     reason = models.CharField(max_length=800)
+    visual_review_confirmed = models.BooleanField(default=False)
+    policy_review_confirmed = models.BooleanField(default=False)
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
