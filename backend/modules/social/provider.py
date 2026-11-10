@@ -91,3 +91,41 @@ def verify_webhook_signature(raw_body, signature_header):
     ).hexdigest()
     if not hmac.compare_digest(expected, supplied.lower()):
         raise PermissionDenied("Invalid Stream webhook signature")
+
+
+def set_video_private(video_uid, *, private):
+    """Flip Cloudflare Stream's signed-URL requirement after a human decision.
+
+    Only call with an exact server-issued UID. A successful HTTP response is
+    insufficient if the returned state does not confirm the desired policy.
+    """
+    if (
+        not re.fullmatch(r"[a-fA-F0-9]{32}", str(video_uid))
+        or not settings.STREAM_ACCOUNT_ID
+        or not settings.STREAM_API_TOKEN
+    ):
+        raise StreamUnavailable()
+    request = urllib.request.Request(
+        "https://api.cloudflare.com/client/v4/accounts/"
+        + settings.STREAM_ACCOUNT_ID
+        + "/stream/"
+        + video_uid,
+        data=json.dumps({"requireSignedURLs": private}).encode("utf-8"),
+        headers={
+            "Authorization": "Bearer " + settings.STREAM_API_TOKEN,
+            "Content-Type": "application/json",
+        },
+        method="PATCH",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=8) as response:
+            result = json.loads(response.read(64 * 1024))
+    except (urllib.error.URLError, TimeoutError, ValueError, OSError):
+        raise StreamUnavailable() from None
+    if (
+        not isinstance(result, dict)
+        or result.get("success") is not True
+        or not isinstance(result.get("result"), dict)
+        or result["result"].get("requireSignedURLs") is not private
+    ):
+        raise StreamUnavailable()
