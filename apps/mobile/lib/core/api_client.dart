@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'listing_models.dart';
+import 'video_feed_models.dart';
 
 import 'package:http_parser/http_parser.dart';
 
@@ -423,6 +424,38 @@ class ApiClient {
       response = await send(access);
     }
     return _decode(response);
+  }
+
+  /// Public, paginated list of safety-reviewed videos.
+  Future<AnimalVideoPage> getVideoFeed({int page = 1}) async {
+    if (page < 1) throw const ApiFailure('Invalid video page');
+    final response = await _client.get(
+      _uri('/api/v1/feed/videos/?page=$page'),
+    ).timeout(const Duration(seconds: 15));
+    final data = _decode(response);
+    final raw = data['results'];
+    if (raw is! List) throw const ApiFailure('Unexpected video response');
+    try {
+      return AnimalVideoPage(
+        posts: raw.map((item) =>
+            AnimalVideoPost.fromJson(item as Map<String, dynamic>)).toList(),
+        hasMore: data['next'] != null,
+      );
+    } on FormatException {
+      throw const ApiFailure('Unsupported video source');
+    } on TypeError {
+      throw const ApiFailure('Unexpected video response');
+    }
+  }
+
+  Future<AnimalListing> getListing(String id) async {
+    if (!RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(id)) {
+      throw const ApiFailure('Invalid animal listing');
+    }
+    final response = await _client.get(
+      _uri('/api/v1/listings/$id/'),
+    ).timeout(const Duration(seconds: 15));
+    return AnimalListing.fromJson(_decode(response));
   }
 
   Future<List<AnimalListing>> getListings() async {

@@ -1,5 +1,6 @@
 """Django settings for the independent Anima Platform backend."""
 import os
+import re
 from datetime import timedelta
 from pathlib import Path
 
@@ -29,6 +30,7 @@ INSTALLED_APPS = [
     "modules.accounts",
     "modules.catalog",
     "modules.listings",
+    "modules.social.apps.SocialConfig",
     "modules.media.apps.MediaConfig",
 ]
 MIDDLEWARE = [
@@ -146,6 +148,15 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = False
     SECURE_SSL_REDIRECT = os.getenv("DJANGO_HTTPS_REDIRECT", "true").lower() == "true"
     CSRF_TRUSTED_ORIGINS = [v.strip() for v in os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if v.strip()]
+# Only a trusted Cloudflare Stream host can serve public moderated clips.
+# Leaving this unset intentionally disables the feed while video uploads are built.
+VIDEO_DELIVERY_HOST = os.getenv("VIDEO_DELIVERY_HOST", "").strip().lower()
+if VIDEO_DELIVERY_HOST and not re.fullmatch(
+    r"(?:customer-[a-z0-9-]+\.cloudflarestream\.com|videodelivery\.net)",
+    VIDEO_DELIVERY_HOST,
+):
+    raise RuntimeError("VIDEO_DELIVERY_HOST must be a Cloudflare Stream delivery domain")
+
 # No live commerce integration exists during M0.
 PAYMENTS_ENABLED = False
 

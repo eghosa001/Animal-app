@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'core/api_client.dart';
 import 'password_recovery_page.dart';
+import 'listing_detail_page.dart';
+import 'video_feed_page.dart';
 import 'revoke_sessions_page.dart';
 import 'seller_media_page.dart';
 import 'seller_listings_page.dart';
@@ -32,14 +35,15 @@ class AnimaApp extends StatelessWidget {
 }
 
 class AppShell extends StatefulWidget {
-  const AppShell({super.key});
+  const AppShell({super.key, this.api});
+  final ApiClient? api;
 
   @override
   State<AppShell> createState() => _AppShellState();
 }
 
 class _AppShellState extends State<AppShell> {
-  final ApiClient _api = ApiClient();
+  late final ApiClient _api = widget.api ?? ApiClient();
   int _selected = 0;
 
   @override
@@ -53,9 +57,17 @@ class _AppShellState extends State<AppShell> {
     Widget body;
     switch (_selected) {
       case 0:
-        body = HomePage(
+        body = VideoFeedPage(
+          api: _api,
           openMarket: () => setState(() => _selected = 1),
-          openAccount: () => setState(() => _selected = 4),
+          openListing: (id) async {
+            await Navigator.of(context).push<void>(
+              MaterialPageRoute<void>(
+                builder: (context) =>
+                    ListingDetailPage(api: _api, listingId: id),
+              ),
+            );
+          },
         );
       case 1:
         body = MarketplacePage(api: _api);
@@ -74,10 +86,17 @@ class _AppShellState extends State<AppShell> {
         body = AccountPage(api: _api);
     }
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Anima')),
-      body: SafeArea(child: body),
-      bottomNavigationBar: NavigationBar(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: _selected == 0 ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+      child: Scaffold(
+      backgroundColor: _selected == 0 ? Colors.black : null,
+      appBar: _selected == 0 ? null : AppBar(title: const Text('Anima')),
+      body: _selected == 0 ? body : SafeArea(child: body),
+      bottomNavigationBar: Theme(
+        data: _selected == 0
+            ? ThemeData.dark(useMaterial3: true)
+            : Theme.of(context),
+        child: NavigationBar(
         selectedIndex: _selected,
         onDestinationSelected: (value) => setState(() => _selected = value),
         destinations: const [
@@ -88,52 +107,8 @@ class _AppShellState extends State<AppShell> {
           NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
-    );
-  }
-}
-
-class HomePage extends StatelessWidget {
-  const HomePage({required this.openMarket, required this.openAccount, super.key});
-  final VoidCallback openMarket;
-  final VoidCallback openAccount;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        const SizedBox(height: 18),
-        const Icon(Icons.pets, size: 64),
-        const SizedBox(height: 18),
-        Text('One community for animals', style: Theme.of(context).textTheme.headlineMedium),
-        const SizedBox(height: 10),
-        const Text('Discover animal listings and connect with verified sellers. Social videos and messaging are being built.'),
-        const SizedBox(height: 20),
-        FilledButton.icon(
-          onPressed: openMarket,
-          icon: const Icon(Icons.search),
-          label: const Text('Browse marketplace'),
-        ),
-        OutlinedButton.icon(
-          onPressed: openAccount,
-          icon: const Icon(Icons.person_add_outlined),
-          label: const Text('Create an account'),
-        ),
-        const SizedBox(height: 30),
-        const Card(
-          child: Padding(
-            padding: EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Development preview', style: TextStyle(fontWeight: FontWeight.bold)),
-                SizedBox(height: 8),
-                Text('No payment protection or video content is available in this build. All sales remain disabled until regulated payment and welfare checks are approved.'),
-              ],
-            ),
-          ),
-        ),
-      ],
+      ),
+      ),
     );
   }
 }
@@ -207,6 +182,13 @@ class _MarketplacePageState extends State<MarketplacePage> {
               final item = listings[index];
               return Card(
                 child: ListTile(
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (context) => ListingDetailPage(
+                        api: widget.api, listingId: item.id,
+                      ),
+                    ),
+                  ),
                   leading: item.photoUrls.isEmpty
                       ? const Icon(Icons.pets_outlined, size: 34)
                       : ClipRRect(
