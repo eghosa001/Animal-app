@@ -61,7 +61,7 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
                       Uri.parse(apiBaseUrl)
                           .resolve(animal.photoUrls[index]).toString(),
                       fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) =>
+                      errorBuilder: (context, error, stackTrace) =>
                           const Center(child: Icon(Icons.pets, size: 58)),
                     ),
                   ),
