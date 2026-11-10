@@ -16,5 +16,6 @@ urlpatterns = [
     path("api/v1/auth/", include("modules.accounts.urls")),
     path("api/v1/catalog/", include("modules.catalog.urls")),
     path("api/v1/media/", include("modules.media.urls")),
+    path("api/v1/feed/", include("modules.social.urls")),
     path("api/v1/", include(router.urls)),
 ]
