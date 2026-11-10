@@ -18,11 +18,6 @@ class Migration(migrations.Migration):
                 "permissions": ((
                     "review_videopost", "Can moderate and publish animal videos"
                 ),),
-                "indexes": [
-                    models.Index(
-                        fields=("state", "-created_at"), name="anima_video_feed_idx"
-                    ),
-                ],
             },
         ),
         migrations.AlterField(
@@ -45,7 +40,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="VideoReviewEvent",
             fields=[
-                ("id", models.BigAutoField(primary_key=True, serialize=False)),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
                 ("decision", models.CharField(
                     choices=[
                         ("approve", "Approve after visual review"),
