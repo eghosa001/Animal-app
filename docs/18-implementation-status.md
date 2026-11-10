@@ -53,9 +53,9 @@ Updated 2026-11-10 for video-first development PR #29; previous baseline 2026-11
 - [PR #26](https://github.com/eghosa001/Animal-app/pull/26) **merged**. [Combined-branch CI](https://github.com/eghosa001/Animal-app/actions/runs/42598245974) and [post-merge main CI](https://github.com/eghosa001/Animal-app/actions/runs/42598475720) each passed Django system/migration checks, **74 tests + 4 subtests** on PostgreSQL.
 - Real operator enrollment, time-drift testing, account recovery drill and production monitoring remain outstanding.
 
-### Video-first Home — PR #29 (development branch, CI/device acceptance pending)
+### Video-first Home — PR #29 merged; CI verified, device acceptance pending
 
-The owner confirmed a TikTok-style **video-first entry point** for the entire animal platform. This PR replaces the text-first Flutter Home with a vertical HLS player and adds read-only, paginated moderated video metadata plus safe eligible-animal links. Source and tests exist on a branch; do not describe video upload, moderation tooling, any live content or successful HLS playback as available. Full [decision and remaining gates](28-video-first-product-decision.md). This does **not** close M3.
+The owner confirmed a TikTok-style **video-first entry point** for the entire animal platform. [PR #29](https://github.com/eghosa001/Animal-app/pull/29) **merged** a vertical HLS player in place of the text-first Flutter Home, a read-only paginated moderated video endpoint and safe eligible-animal links. [Backend CI](https://github.com/eghosa001/Animal-app/actions/runs/42887364050) passed **78 tests plus 4 subtests**; [Flutter CI and Android debug APK](https://github.com/eghosa001/Animal-app/actions/runs/42887363955) passed analysis, **19 tests** and debug APK compilation. No actual Stream upload, live video ingestion, real-device playback or iOS verification is delivered; do not describe any of those as available. Full [decision and remaining gates](28-video-first-product-decision.md). This does **not** close M3.
 
 ## M1 remains open — critical blockers
 
