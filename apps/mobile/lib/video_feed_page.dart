@@ -16,7 +16,7 @@ class VideoFeedPage extends StatefulWidget {
   });
   final ApiClient api;
   final VoidCallback openMarket;
-  final ValueChanged<String> openListing;
+  final Future<void> Function(String) openListing;
 
   @override
   State<VideoFeedPage> createState() => _VideoFeedPageState();
@@ -192,7 +192,7 @@ class _AnimalVideoTile extends StatefulWidget {
   });
   final AnimalVideoPost post;
   final bool active;
-  final ValueChanged<String> openListing;
+  final Future<void> Function(String) openListing;
 
   @override
   State<_AnimalVideoTile> createState() => _AnimalVideoTileState();
@@ -273,6 +273,22 @@ class _AnimalVideoTileState extends State<_AnimalVideoTile>
     _muted = !_muted;
     unawaited(_controller?.setVolume(_muted ? 0 : 1) ?? Future<void>.value());
     setState(() {});
+  }
+
+  Future<void> _openLinkedListing(String id) async {
+    final controller = _controller;
+    if (controller != null && _ready) {
+      await controller.pause();
+      if (mounted) setState(() {});
+    }
+    try {
+      await widget.openListing(id);
+    } finally {
+      if (mounted && widget.active && controller == _controller && _ready) {
+        await controller?.play();
+        if (mounted) setState(() {});
+      }
+    }
   }
 
   @override
@@ -366,7 +382,7 @@ class _AnimalVideoTileState extends State<_AnimalVideoTile>
                 if (widget.post.listing case final listing?) ...[
                   const SizedBox(height: 14),
                   FilledButton.icon(
-                    onPressed: () => widget.openListing(listing.id),
+                    onPressed: () => unawaited(_openLinkedListing(listing.id)),
                     icon: const Icon(Icons.pets),
                     label: Text('View animal · ${listing.displayPrice}',
                       maxLines: 1, overflow: TextOverflow.ellipsis),
