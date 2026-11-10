@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'core/api_client.dart';
+import 'create_hub_page.dart';
 import 'password_recovery_page.dart';
 import 'listing_detail_page.dart';
 import 'video_feed_page.dart';
@@ -72,7 +73,7 @@ class _AppShellState extends State<AppShell> {
       case 1:
         body = MarketplacePage(api: _api);
       case 2:
-        body = SellerListingsPage(
+        body = CreateHubPage(
           api: _api,
           onOpenAccount: () => setState(() => _selected = 4),
         );
