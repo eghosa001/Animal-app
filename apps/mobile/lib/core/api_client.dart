@@ -456,13 +456,13 @@ class ApiClient {
       'animal_topic_attested': animalTopicAttested,
     };
     var access = await _storage.read(key: 'anima_access');
-    if (access == null) throw const ApiFailure('Sign in to post animal videos');
+    if (access == null) { throw const ApiFailure('Sign in to post animal videos'); }
     var response = await _post(
       '/api/v1/feed/videos/upload-ticket/', data, token: access,
     );
     if (response.statusCode == 401) {
       access = await _refresh();
-      if (access == null) throw const ApiFailure('Session expired. Sign in again.');
+      if (access == null) { throw const ApiFailure('Session expired. Sign in again.'); }
       response = await _post(
         '/api/v1/feed/videos/upload-ticket/', data, token: access,
       );
