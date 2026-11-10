@@ -40,41 +40,41 @@ class _VideoUploadPageState extends State<VideoUploadPage> {
     });
     try {
       final settings = await widget.api.getVideoUploadCapabilities();
-      if (!mounted) return;
+      if (!mounted) { return; }
       setState(() {
         _enabled = settings['enabled'] == true;
         _limitBytes = settings['max_file_bytes'] as int;
       });
-      if (_enabled) await _refreshPosts();
+      if (_enabled) { await _refreshPosts(); }
     } on ApiFailure catch (error) {
-      if (mounted) setState(() => _error = error.message);
+      if (mounted) { setState(() => _error = error.message); }
     } catch (_) {
-      if (mounted) setState(() =>
-          _error = 'Unable to check video upload availability.');
+      if (mounted) { setState(() =>
+          _error = 'Unable to check video upload availability.'); }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) { setState(() => _loading = false); }
     }
   }
 
   Future<void> _refreshPosts() async {
     try {
       final posts = await widget.api.getMyVideos();
-      if (mounted) setState(() => _posts = posts);
+      if (mounted) { setState(() => _posts = posts); }
     } on ApiFailure catch (error) {
-      if (mounted) setState(() => _notice = error.message);
+      if (mounted) { setState(() => _notice = error.message); }
     } catch (_) {
-      if (mounted) setState(() =>
-          _notice = 'Could not refresh your video status.');
+      if (mounted) { setState(() =>
+          _notice = 'Could not refresh your video status.'); }
     }
   }
 
   Future<void> _selectVideo() async {
-    if (!_enabled || _busy) return;
+    if (!_enabled || _busy) { return; }
     try {
       final selected = await _picker.pickVideo(
         source: ImageSource.gallery,
       );
-      if (selected == null) return;
+      if (selected == null) { return; }
       final path = selected.path.toLowerCase();
       if (!path.endsWith('.mp4') && !path.endsWith('.mov')) {
         throw const ApiFailure('Please select an MP4 or MOV video.');
@@ -91,17 +91,17 @@ class _VideoUploadPageState extends State<VideoUploadPage> {
         });
       }
     } on ApiFailure catch (error) {
-      if (mounted) setState(() => _error = error.message);
+      if (mounted) { setState(() => _error = error.message); }
     } catch (_) {
-      if (mounted) setState(() =>
-          _error = 'Could not read the selected video.');
+      if (mounted) { setState(() =>
+          _error = 'Could not read the selected video.'); }
     }
   }
 
   Future<void> _upload() async {
     final video = _video;
     final caption = _caption.text.trim();
-    if (_busy || !_enabled || video == null) return;
+    if (_busy || !_enabled || video == null) { return; }
     if (caption.length < 4 || caption.length > 400 ||
         !_rights || !_animalTopic) {
       setState(() =>
@@ -121,7 +121,7 @@ class _VideoUploadPageState extends State<VideoUploadPage> {
         rightsAttested: _rights,
         animalTopicAttested: _animalTopic,
       );
-      if (!mounted) return;
+      if (!mounted) { return; }
       setState(() =>
           _notice = 'Uploading video securely. Keep this screen open.');
       await widget.api.uploadVideoToStream(
@@ -129,7 +129,7 @@ class _VideoUploadPageState extends State<VideoUploadPage> {
         filePath: video.path,
         mimeType: mimeType,
       );
-      if (!mounted) return;
+      if (!mounted) { return; }
       setState(() {
         _notice = 'Video transferred. Processing and staff review are '
             'still required before anyone else can view it.';
@@ -141,8 +141,7 @@ class _VideoUploadPageState extends State<VideoUploadPage> {
       await _refreshPosts();
     } on ApiFailure catch (error) {
       if (mounted) {
-        setState(() => _error = error.message +
-            ' If the upload started, check your video status before retrying.');
+        setState(() => _error = '${error.message} If the upload started, check your video status before retrying.');
       }
     } catch (_) {
       if (mounted) {
@@ -150,7 +149,7 @@ class _VideoUploadPageState extends State<VideoUploadPage> {
             'Could not complete the upload. Check your connection.');
       }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) { setState(() => _busy = false); }
     }
   }
 
