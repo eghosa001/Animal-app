@@ -1,6 +1,10 @@
 # Implementation roadmap and execution backlog
 Version 0.1 — 2026-11-05. Estimates are planning ranges for a small experienced team; solo implementation may take longer.
 
+## Owner priority change: video-first entry (2026-11-10)
+
+The mobile app must open into a full-height, vertically swiped animal video feed, with the marketplace integrated through eligible listing links. [PR #29](https://github.com/eghosa001/Animal-app/pull/29) merged the native viewer and read-only moderated feed API. **Reorder remaining work** so the M3 video upload/processing/moderation vertical slice is tackled immediately after the M1 safety prerequisites, ahead of discretionary messaging polish. The M2 security, offers and messaging requirements remain mandatory for launch but are no longer the visual Home landing path. Do not enable anonymous video uploads before copyright/consent, processing, moderation, reporting and account-abuse safeguards exist. [Full decision](28-video-first-product-decision.md).
+
 ## Added dependency and completion gates (2026-11-06)
 
 This roadmap must be read alongside the [feature coverage audit](21-feature-completeness-audit.md) and the [definition of done](23-definition-of-done-and-acceptance.md). All tasks are closed **one verified scope at a time**, with reviewed PR, PostgreSQL migration/negative tests, Android/iOS checks where applicable and post-merge evidence. The entire M1 milestone remains open despite the audited seller-review subtask having been merged.
