@@ -94,3 +94,7 @@ For local verification emails, check the Django console output; **never use cons
 Account password recovery is now implemented in Django and Flutter (PR #23), including session revocation and verification resend limits. However a real SMTP service and physical Android/iOS testing remain pending, and staff MFA code is merged in PR #26, with backend CI passing; real operator enrollment and staging acceptance remain pending.
 
 The Flutter individual-animal draft creation/editing and photo gallery workflow is now implemented and CI-tested. **Next:** validate real R2 private-bucket staging, evidence retention/deletion, species and welfare policy, health provenance requirements, and physical Android/iOS end-to-end behaviour before considering public release. No live payments are enabled or assumed.
+
+
+## Latest product direction (2026-11-10)
+The owner wants **video-first discovery**: the app should open directly to a vertically swiped, full-screen animal video feed; marketplace listings and creator/seller profiles remain integrated rather than preceding the feed. Implementation and launch gates are tracked in [docs/28-video-first-product-decision.md](docs/28-video-first-product-decision.md) and development [PR #29](https://github.com/eghosa001/Animal-app/pull/29). Live video uploads, payments and production deployment are **not yet implemented**.
