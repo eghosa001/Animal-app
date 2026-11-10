@@ -5,7 +5,7 @@ Version 0.1 — 2026-11-05. Brand direction is pending client approval. This def
 Feel like a first-class mobile product, not a classifieds page inside a webview. Fast discovery, clear buyer protection, accessible controls, and species-aware listing presentation. One unified Flutter app for enthusiasts, buyers and sellers. Avoid giant admin-style forms on mobile.
 
 ## Navigation and page families
-Five primary tabs: Home, Marketplace, Create, Chats, Profile. A seller hub exists under Profile and via contextual sale CTAs. Home: For You, Following, safe recommendations. Marketplace: category chips, text search, filter bottom sheet, recent/saved searches. Create: choose social post or approved animal listing (seller eligibility checked). Chats: buyer/seller conversations with listing context and offer states. Profile: content, favourites, orders, verification and settings.
+Five primary tabs: Home (video-first), Marketplace, Create, Chats, Profile. **Owner decision 2026-11-10:** cold launch opens directly into the vertically swipeable short-video feed, with no text-first splash/home page; see [video-first ADR](28-video-first-product-decision.md). A seller hub exists under Profile and via contextual sale CTAs. Home: For You, Following, safe recommendations. Marketplace: category chips, text search, filter bottom sheet, recent/saved searches. Create: choose social post or approved animal listing (seller eligibility checked). Chats: buyer/seller conversations with listing context and offer states. Profile: content, favourites, orders, verification and settings.
 
 ## Screen-by-screen functional states
 ### Onboarding
