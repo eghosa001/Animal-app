@@ -157,6 +157,19 @@ if VIDEO_DELIVERY_HOST and not re.fullmatch(
 ):
     raise RuntimeError("VIDEO_DELIVERY_HOST must be a Cloudflare Stream delivery domain")
 
+# Signed private Stream upload tickets are disabled until operator credentials,
+# data-protection/rights policy and Stream processing callbacks are provisioned.
+STREAM_UPLOADS_ENABLED = os.getenv("STREAM_UPLOADS_ENABLED", "false").lower() == "true"
+STREAM_ACCOUNT_ID = os.getenv("STREAM_ACCOUNT_ID", "").strip()
+STREAM_API_TOKEN = os.getenv("STREAM_API_TOKEN", "").strip()
+STREAM_WEBHOOK_SECRET = os.getenv("STREAM_WEBHOOK_SECRET", "").strip()
+if STREAM_UPLOADS_ENABLED and not (
+    re.fullmatch(r"[a-fA-F0-9]{32}", STREAM_ACCOUNT_ID)
+    and STREAM_API_TOKEN and STREAM_WEBHOOK_SECRET and VIDEO_DELIVERY_HOST
+):
+    raise RuntimeError("Stream upload configuration is incomplete")
+REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["video_ticket"] = "4/hour"
+
 # No live commerce integration exists during M0.
 PAYMENTS_ENABLED = False
 

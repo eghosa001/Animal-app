@@ -19,8 +19,8 @@ class VideoPost(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="animal_videos"
     )
     caption = models.CharField(max_length=400)
-    # The server must only learn this identifier from a trusted, signed Stream
-    # processing callback. The upload/webhook workflow is NOT implemented yet.
+    # Issued by Cloudflare Stream to the backend; never selected by the client.
+    # A signed provider webhook confirms processing, not publication.
     video_uid = models.CharField(
         max_length=32, unique=True,
         validators=[RegexValidator(r"^[a-fA-F0-9]{32}$", "Invalid Stream video UID")],
@@ -30,6 +30,10 @@ class VideoPost(models.Model):
         related_name="linked_videos", null=True, blank=True,
     )
     state = models.CharField(max_length=12, choices=State.choices, default=State.PENDING)
+    upload_expires_at = models.DateTimeField(null=True, blank=True)
+    rights_attested = models.BooleanField(default=False)
+    animal_topic_attested = models.BooleanField(default=False)
+    processing_error = models.CharField(max_length=80, blank=True, default="")
     processed_at = models.DateTimeField(null=True, blank=True)
     moderated_at = models.DateTimeField(null=True, blank=True)
     moderated_by = models.ForeignKey(
