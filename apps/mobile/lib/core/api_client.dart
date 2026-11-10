@@ -426,6 +426,112 @@ class ApiClient {
     return _decode(response);
   }
 
+  /// Read-only operator switch; avoids opening a video picker when uploads are off.
+  Future<Map<String, dynamic>> getVideoUploadCapabilities() async {
+    final response = await _client.get(
+      _uri('/api/v1/feed/videos/upload-capabilities/'),
+    ).timeout(const Duration(seconds: 15));
+    final data = _decode(response);
+    if (data['enabled'] is! bool ||
+        data['max_file_bytes'] is! int ||
+        data['max_duration_seconds'] is! int) {
+      throw const ApiFailure('Unexpected video upload configuration');
+    }
+    return data;
+  }
+
+  /// Creates a private Stream ticket. Never puts backend credentials in the app.
+  Future<Map<String, dynamic>> requestVideoUploadTicket({
+    required String caption,
+    required bool rightsAttested,
+    required bool animalTopicAttested,
+  }) async {
+    if (caption.trim().length < 4 || caption.trim().length > 400 ||
+        !rightsAttested || !animalTopicAttested) {
+      throw const ApiFailure('Please enter a caption and confirm video rights');
+    }
+    final data = <String, dynamic>{
+      'caption': caption.trim(),
+      'rights_attested': rightsAttested,
+      'animal_topic_attested': animalTopicAttested,
+    };
+    var access = await _storage.read(key: 'anima_access');
+    if (access == null) throw const ApiFailure('Sign in to post animal videos');
+    var response = await _post(
+      '/api/v1/feed/videos/upload-ticket/', data, token: access,
+    );
+    if (response.statusCode == 401) {
+      access = await _refresh();
+      if (access == null) throw const ApiFailure('Session expired. Sign in again.');
+      response = await _post(
+        '/api/v1/feed/videos/upload-ticket/', data, token: access,
+      );
+    }
+    final ticket = _decode(response);
+    final uploadUri = Uri.tryParse(ticket['upload_url']?.toString() ?? '');
+    if (ticket['id'] is! String || uploadUri == null ||
+        !_trustedStreamUploadUri(uploadUri)) {
+      throw const ApiFailure('Untrusted provider upload destination');
+    }
+    return ticket;
+  }
+
+  /// Direct-to-provider upload; never forwards the user's bearer token.
+  Future<void> uploadVideoToStream({
+    required String uploadUrl,
+    required String filePath,
+    required String mimeType,
+  }) async {
+    final uri = Uri.tryParse(uploadUrl);
+    if (uri == null || !_trustedStreamUploadUri(uri)) {
+      throw const ApiFailure('Untrusted provider upload destination');
+    }
+    if (mimeType != 'video/mp4' && mimeType != 'video/quicktime') {
+      throw const ApiFailure('Only MP4 or MOV videos are supported');
+    }
+    final request = http.MultipartRequest('POST', uri);
+    request.files.add(await http.MultipartFile.fromPath(
+      'file', filePath, contentType: MediaType.parse(mimeType),
+    ));
+    try {
+      final streamed = await _client.send(request).timeout(
+        const Duration(minutes: 5),
+      );
+      // Drain the response so the HTTP connection can be reused; do not log
+      // provider content or embed upload URLs in errors.
+      await streamed.stream.drain<void>();
+      if (streamed.statusCode < 200 || streamed.statusCode >= 300) {
+        throw const ApiFailure('Video transfer was not accepted. Select retry.');
+      }
+    } on ApiFailure {
+      rethrow;
+    } catch (_) {
+      throw const ApiFailure('Video upload failed. Check your connection.');
+    }
+  }
+
+  bool _trustedStreamUploadUri(Uri uri) =>
+      uri.scheme == 'https' &&
+      uri.host == 'upload.videodelivery.net' &&
+      !uri.hasPort &&
+      uri.userInfo.isEmpty &&
+      uri.fragment.isEmpty &&
+      uri.pathSegments.isNotEmpty;
+
+  Future<List<Map<String, dynamic>>> getMyVideos() async {
+    final response = await _authorizedGet('/api/v1/feed/videos/mine/');
+    final payload = _decode(response);
+    final results = payload['results'];
+    if (results is! List) {
+      throw const ApiFailure('Unexpected creator video status response');
+    }
+    try {
+      return results.cast<Map<String, dynamic>>();
+    } on TypeError {
+      throw const ApiFailure('Unexpected creator video status response');
+    }
+  }
+
   /// Public, paginated list of safety-reviewed videos.
   Future<AnimalVideoPage> getVideoFeed({int page = 1}) async {
     if (page < 1) throw const ApiFailure('Invalid video page');
