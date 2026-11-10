@@ -60,11 +60,14 @@ class _AppShellState extends State<AppShell> {
         body = VideoFeedPage(
           api: _api,
           openMarket: () => setState(() => _selected = 1),
-          openListing: (id) => Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (context) => ListingDetailPage(api: _api, listingId: id),
-            ),
-          ),
+          openListing: (id) async {
+            await Navigator.of(context).push<void>(
+              MaterialPageRoute<void>(
+                builder: (context) =>
+                    ListingDetailPage(api: _api, listingId: id),
+              ),
+            );
+          },
         );
       case 1:
         body = MarketplacePage(api: _api);
