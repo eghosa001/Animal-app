@@ -50,6 +50,10 @@ From the signed-out **Profile** screen, tap **Forgot password?**. Enter your reg
 
 The signed-in Profile screen now includes **Sign out on all devices**. A person enters their existing password and confirms the action. After server authorization and a successful all-device revocation, this phone clears its secure JWT tokens and returns to sign-in. If the password is wrong or the server cannot confirm, the app displays an error and does not claim other sessions were revoked. See [the account-security runbook](../../docs/26-account-recovery.md). The feature has passing backend/Flutter/Android CI, but has **not** been accepted on physical Android/iOS devices or a production account. A device-management list and staff MFA are still unavailable.
 
+## Creator video upload (under development; disabled without Stream)
+
+The Create tab now offers **Post an animal video** and the existing **List or manage an animal** workflow. The video screen checks the server capability flag before exposing video selection, accepts MP4/MOV under 200 MB, requires a caption and footage-rights/animal-topic attestation, requests a private upload ticket, transfers directly to trusted Stream storage, and displays private processing/moderation status. No approved public publication flow or live Cloudflare integration is claimed. See [creator-video guide](../../docs/30-creator-video-ux.md).
+
 ## Video-first Home (PR #29 merged; real-device validation pending)
 
 The owner specified a short-form video feed as the first screen. The Home tab now targets a full-height, vertically swipable HLS player (Flutter `video_player`), an animal creator/caption overlay, visible-clip-only playback, play/pause and mute controls, next-page loading and eligible linked-listing details.

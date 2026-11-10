@@ -57,6 +57,10 @@ Updated 2026-11-10 for video-first development PR #29; previous baseline 2026-11
 
 The owner confirmed a TikTok-style **video-first entry point** for the entire animal platform. [PR #29](https://github.com/eghosa001/Animal-app/pull/29) **merged** a vertical HLS player in place of the text-first Flutter Home, a read-only paginated moderated video endpoint and safe eligible-animal links. [Backend CI](https://github.com/eghosa001/Animal-app/actions/runs/42887364050) passed **78 tests plus 4 subtests**; [Flutter CI and Android debug APK](https://github.com/eghosa001/Animal-app/actions/runs/42887363955) passed analysis, **19 tests** and debug APK compilation. No actual Stream upload, live video ingestion, real-device playback or iOS verification is delivered; do not describe any of those as available. Full [decision and remaining gates](28-video-first-product-decision.md). This does **not** close M3.
 
+### Private creator uploads — video posting slice under CI review
+
+PR #31 **merged** the default-off Stream private direct upload ticket and signed processing webhook, with [backend CI](https://github.com/eghosa001/Animal-app/actions/runs/42889742919) passing **88 tests + 4 subtests**. The subsequent Flutter creator UI and read-only private status endpoints are in a separate review branch; do not treat them as deployed until tests and merge complete. No upload/publish service is live; no staff video publication moderation, takedown controls, payout integration or actual video in Home has been verified. See [provider setup](29-private-video-upload-runbook.md) and [creator UX](30-creator-video-ux.md).
+
 ## M1 remains open — critical blockers
 
 1. Cloudflare R2 real-account, private-bucket staging integration and authorized staff access audit on live infrastructure.
