@@ -1,5 +1,5 @@
 # Anima implementation status
-Updated 2026-11-06. Distinguishes working development code from unbuilt production capabilities. Full release gates: [definition of done](23-definition-of-done-and-acceptance.md).
+Updated 2026-11-10 for video-first development PR #29; previous baseline 2026-11-06. Distinguishes working development code from unbuilt production capabilities. Full release gates: [definition of done](23-definition-of-done-and-acceptance.md).
 
 ## Verified and merged source
 
@@ -52,6 +52,10 @@ Updated 2026-11-06. Distinguishes working development code from unbuilt producti
 - First-device TOTP enrollment is a private interactive server command; see [staff MFA runbook](27-staff-mfa.md).
 - [PR #26](https://github.com/eghosa001/Animal-app/pull/26) **merged**. [Combined-branch CI](https://github.com/eghosa001/Animal-app/actions/runs/42598245974) and [post-merge main CI](https://github.com/eghosa001/Animal-app/actions/runs/42598475720) each passed Django system/migration checks, **74 tests + 4 subtests** on PostgreSQL.
 - Real operator enrollment, time-drift testing, account recovery drill and production monitoring remain outstanding.
+
+### Video-first Home — PR #29 (development branch, CI/device acceptance pending)
+
+The owner confirmed a TikTok-style **video-first entry point** for the entire animal platform. This PR replaces the text-first Flutter Home with a vertical HLS player and adds read-only, paginated moderated video metadata plus safe eligible-animal links. Source and tests exist on a branch; do not describe video upload, moderation tooling, any live content or successful HLS playback as available. Full [decision and remaining gates](28-video-first-product-decision.md). This does **not** close M3.
 
 ## M1 remains open — critical blockers
 
