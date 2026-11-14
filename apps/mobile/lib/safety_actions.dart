@@ -40,7 +40,7 @@ class _ReportContentPageState extends State<ReportContentPage> {
   }
 
   Future<void> _submit() async {
-    if (_busy) return;
+    if (_busy) { return; }
     final explanation = _details.text.trim();
     if (explanation.length < 20 || explanation.length > 1500) {
       setState(() {
@@ -59,7 +59,7 @@ class _ReportContentPageState extends State<ReportContentPage> {
         category: _category,
         detail: explanation,
       );
-      if (!mounted) return;
+      if (!mounted) { return; }
       Navigator.of(context).pop(true);
     } on ApiFailure catch (error) {
       if (mounted) setState(() { _error = error.message; });
@@ -98,7 +98,7 @@ class _ReportContentPageState extends State<ReportContentPage> {
                 ),
             ],
             onChanged: _busy ? null : (value) {
-              if (value != null) setState(() { _category = value; });
+              if (value != null) { setState(() { _category = value; }); }
             },
           ),
           const SizedBox(height: 16),
@@ -138,7 +138,7 @@ Future<bool> confirmBlockAccount({
   required ApiClient api,
   required String userId,
 }) async {
-  if (userId.isEmpty) return false;
+  if (userId.isEmpty) { return false; }
   final accepted = await showDialog<bool>(
     context: context,
     builder: (dialogContext) => AlertDialog(
@@ -160,7 +160,7 @@ Future<bool> confirmBlockAccount({
       ],
     ),
   );
-  if (accepted != true) return false;
+  if (accepted != true) { return false; }
   try {
     await api.blockUser(userId);
     if (context.mounted) {
