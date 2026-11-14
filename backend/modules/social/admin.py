@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.html import format_html
+from rest_framework.exceptions import PermissionDenied as ApiPermissionDenied
 
 from modules.accounts.authentication import require_staff_mfa
 
@@ -82,7 +83,7 @@ class VideoPostAdmin(admin.ModelAdmin):
                     reviewer=request.user,
                     **form.cleaned_data,
                 )
-            except (ValidationError, PermissionDenied) as exc:
+            except (ValidationError, PermissionDenied, ApiPermissionDenied) as exc:
                 form.add_error(None, str(exc))
             except StreamUnavailable:
                 messages.warning(
