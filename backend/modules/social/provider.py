@@ -127,6 +127,6 @@ def set_video_private(video_uid, *, private):
         or result.get("success") is not True
         or not isinstance(result.get("result"), dict)
         or result["result"].get("requireSignedURLs") is not private
-        or result["result"].get("uid", video_uid) != video_uid
+        or result["result"].get("uid") != video_uid
     ):
         raise StreamUnavailable()
