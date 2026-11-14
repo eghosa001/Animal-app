@@ -18,5 +18,6 @@ urlpatterns = [
     path("api/v1/media/", include("modules.media.urls")),
     path("api/v1/feed/", include("modules.social.urls")),
     path("api/v1/chats/", include("modules.chats.urls")),
+    path("api/v1/safety/", include("modules.safety.urls")),
     path("api/v1/", include(router.urls)),
 ]
