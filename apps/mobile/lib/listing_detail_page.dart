@@ -72,7 +72,7 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
   );
 
   Future<void> _blockSeller(AnimalListing animal) async {
-    if (animal.sellerId.isEmpty) return;
+    if (animal.sellerId.isEmpty) { return; }
     final blocked = await confirmBlockAccount(
       context: context,
       api: widget.api,
