@@ -41,7 +41,7 @@ class FakeChatApi extends ApiClient {
 
   @override
   Future<ChatMessagePage> getConversationMessages(
-    String conversationId, {int page = 1},
+    String conversationId, {int page = 1}
   ) async {
     expect(conversationId, testConversationId);
     return ChatMessagePage(
@@ -53,7 +53,7 @@ class FakeChatApi extends ApiClient {
   @override
   Future<ChatMessage> sendChatMessage(
     String conversationId, String body,
-    {required String clientNonce},
+    {required String clientNonce}
   ) async {
     expect(conversationId, testConversationId);
     submittedText = body;
