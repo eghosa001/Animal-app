@@ -43,8 +43,11 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     if (!reset && !_hasMore) { return; }
     if (mounted) {
       setState(() {
-        if (reset) _loading = true;
-        else _older = true;
+        if (reset) {
+          _loading = true;
+        } else {
+          _older = true;
+        }
         _error = '';
       });
     }
@@ -55,8 +58,11 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
       );
       if (!mounted) { return; }
       setState(() {
-        if (reset) _messages = result.messages;
-        else _messages.addAll(result.messages);
+        if (reset) {
+          _messages = result.messages;
+        } else {
+          _messages.addAll(result.messages);
+        }
         _hasMore = result.hasMore;
         _page = page + 1;
       });
