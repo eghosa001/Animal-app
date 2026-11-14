@@ -5,6 +5,7 @@ class ChatConversation {
     required this.listingId,
     required this.listingTitle,
     required this.counterpartyName,
+    this.counterpartyId = '',
     required this.canSend,
     required this.updatedAt,
   });
@@ -13,6 +14,7 @@ class ChatConversation {
   final String listingId;
   final String listingTitle;
   final String counterpartyName;
+  final String counterpartyId;
   final bool canSend;
   final DateTime? updatedAt;
 
@@ -22,6 +24,7 @@ class ChatConversation {
       listingId: data['listing']?.toString() ?? '',
       listingTitle: data['listing_title']?.toString() ?? 'Animal listing',
       counterpartyName: data['counterparty_name']?.toString() ?? 'Participant',
+      counterpartyId: data['counterparty_id']?.toString() ?? '',
       canSend: data['can_send'] == true,
       updatedAt: DateTime.tryParse(data['updated_at']?.toString() ?? ''),
     );
