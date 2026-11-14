@@ -62,13 +62,13 @@ class _ReportContentPageState extends State<ReportContentPage> {
       if (!mounted) { return; }
       Navigator.of(context).pop(true);
     } on ApiFailure catch (error) {
-      if (mounted) setState(() { _error = error.message; });
+      if (mounted) { setState(() { _error = error.message; }); }
     } catch (_) {
       if (mounted) {
         setState(() { _error = 'Report could not be submitted. Please retry.'; });
       }
     } finally {
-      if (mounted) setState(() { _busy = false; });
+      if (mounted) { setState(() { _busy = false; }); }
     }
   }
 
