@@ -680,7 +680,7 @@ class ApiClient {
     final response = await _authorizedGet('/api/v1/safety/blocks/');
     final payload = _decode(response);
     final raw = payload['results'];
-    if (raw is! List) throw const ApiFailure('Unexpected blocked accounts response');
+    if (raw is! List) { throw const ApiFailure('Unexpected blocked accounts response'); }
     try {
       return raw.cast<Map<String, dynamic>>();
     } on TypeError {
