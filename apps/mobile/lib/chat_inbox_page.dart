@@ -25,11 +25,14 @@ class _ChatInboxPageState extends State<ChatInboxPage> {
   @override
   void initState() {
     super.initState();
-    _refresh();
+    _inbox = widget.api.getMyConversations();
   }
 
   void _refresh() {
-    setState(() => _inbox = widget.api.getMyConversations());
+    final next = widget.api.getMyConversations();
+    setState(() {
+      _inbox = next;
+    });
   }
 
   Future<void> _open(ChatConversation conversation) async {
@@ -113,7 +116,9 @@ class _ChatInboxPageState extends State<ChatInboxPage> {
         return RefreshIndicator(
           onRefresh: () async {
             final future = widget.api.getMyConversations();
-            setState(() => _inbox = future);
+            setState(() {
+              _inbox = future;
+            });
             await future;
           },
           child: ListView.builder(
