@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'core/api_client.dart';
 import 'core/chat_models.dart';
 import 'safety_actions.dart';
+import 'offer_negotiation_page.dart';
 
 /// Safe, text-only conversation with one approved animal listing as context.
 class ChatThreadPage extends StatefulWidget {
@@ -160,6 +161,18 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
       appBar: AppBar(
         title: Text(widget.conversation.counterpartyName),
         actions: [
+          IconButton(
+            tooltip: 'Price offers',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (context) => OfferNegotiationPage(
+                  api: widget.api,
+                  conversation: widget.conversation,
+                ),
+              ),
+            ),
+            icon: const Icon(Icons.handshake_outlined),
+          ),
           PopupMenuButton<String>(
             tooltip: 'Conversation safety options',
             onSelected: (action) {
