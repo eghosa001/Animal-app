@@ -40,7 +40,7 @@ class _ChatInboxPageState extends State<ChatInboxPage> {
         ),
       ),
     );
-    if (mounted) _refresh();
+    if (mounted) { _refresh(); }
   }
 
   @override
