@@ -63,9 +63,11 @@ class _BlockedAccountsPageState extends State<BlockedAccountsPage> {
     } on ApiFailure catch (error) {
       if (mounted) { setState(() { _error = error.message; }); }
     } catch (_) {
-      if (mounted) setState(() {
-        _error = 'Could not unblock account. Try again.';
-      });
+      if (mounted) {
+        setState(() {
+          _error = 'Could not unblock account. Try again.';
+        });
+      }
     } finally {
       if (mounted) { setState(() { _busyId = null; }); }
     }
