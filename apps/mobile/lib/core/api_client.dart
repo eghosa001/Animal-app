@@ -640,6 +640,84 @@ class ApiClient {
     return ChatMessage.fromJson(data);
   }
 
+  /// Server-side user blocking is idempotent and affects chat/feed access.
+  Future<void> blockUser(String userId) async {
+    if (!RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(userId)) {
+      throw const ApiFailure('Invalid account reference');
+    }
+    await _authorizedChatPost(
+      '/api/v1/safety/blocks/', {'blocked_user_id': userId},
+    );
+  }
+
+  Future<void> unblockUser(String userId) async {
+    if (!RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(userId)) {
+      throw const ApiFailure('Invalid account reference');
+    }
+    Future<http.Response> send(String access) => _client.delete(
+      _uri('/api/v1/safety/blocks/$userId/'),
+      headers: {'Authorization': 'Bearer $access'},
+    ).timeout(const Duration(seconds: 15));
+    var access = await _storage.read(key: 'anima_access');
+    if (access == null) {
+      throw const ApiFailure('Sign in to manage blocked accounts');
+    }
+    var response = await send(access);
+    if (response.statusCode == 401) {
+      access = await _refresh();
+      if (access == null) {
+        throw const ApiFailure('Session expired. Sign in again.');
+      }
+      response = await send(access);
+    }
+    if (response.statusCode != 204) {
+      _decode(response);
+      throw const ApiFailure('Could not unblock this account');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getBlockedUsers() async {
+    final response = await _authorizedGet('/api/v1/safety/blocks/');
+    final payload = _decode(response);
+    final raw = payload['results'];
+    if (raw is! List) throw const ApiFailure('Unexpected blocked accounts response');
+    try {
+      return raw.cast<Map<String, dynamic>>();
+    } on TypeError {
+      throw const ApiFailure('Unexpected blocked accounts response');
+    }
+  }
+
+  /// Reports stay in the staff moderation queue; a receipt never promises action.
+  Future<String> reportContent({
+    required String targetType,
+    required String targetId,
+    required String category,
+    required String detail,
+  }) async {
+    if (!const {'video', 'listing', 'message', 'user'}.contains(targetType) ||
+        !RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(targetId) ||
+        !const {'scam', 'harassment', 'welfare', 'illegal_trade',
+                'copyright', 'other'}.contains(category) ||
+        detail.trim().length < 20 || detail.trim().length > 1500) {
+      throw const ApiFailure('Complete the report category and explanation');
+    }
+    final response = await _authorizedChatPost(
+      '/api/v1/safety/reports/',
+      {
+        'target_type': targetType,
+        'target_id': targetId,
+        'category': category,
+        'detail': detail.trim(),
+      },
+    );
+    final id = response['id'];
+    if (id is! String || id.isEmpty) {
+      throw const ApiFailure('Report could not be confirmed');
+    }
+    return id;
+  }
+
   /// Public, paginated list of safety-reviewed videos.
   Future<AnimalVideoPage> getVideoFeed({int page = 1}) async {
     if (page < 1) throw const ApiFailure('Invalid video page');
