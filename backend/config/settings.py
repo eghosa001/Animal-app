@@ -168,6 +168,14 @@ if STREAM_UPLOADS_ENABLED and not (
     and STREAM_API_TOKEN and STREAM_WEBHOOK_SECRET and VIDEO_DELIVERY_HOST
 ):
     raise RuntimeError("Stream upload configuration is incomplete")
+# A separate explicit operator gate prevents a configured upload service from
+# accidentally making videos public before the moderation queue is ready.
+STREAM_PUBLICATION_ENABLED = os.getenv("STREAM_PUBLICATION_ENABLED", "false").lower() == "true"
+if STREAM_PUBLICATION_ENABLED and not (
+    re.fullmatch(r"[a-fA-F0-9]{32}", STREAM_ACCOUNT_ID)
+    and STREAM_API_TOKEN and VIDEO_DELIVERY_HOST
+):
+    raise RuntimeError("Stream publication configuration is incomplete")
 REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["video_ticket"] = "4/hour"
 
 # No live commerce integration exists during M0.

@@ -1,0 +1,33 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<section style="max-width: 840px;">
+  <h2>Manual animal-video moderation</h2>
+  <p>
+    Creator: <strong>{{ video.creator.email }}</strong>
+    | State: <strong>{{ video.get_state_display }}</strong>
+    | Processed: {{ video.processed_at|default:"No" }}
+  </p>
+  <p>Caption: {{ video.caption }}</p>
+  <p>Stream video UID (staff only): <code>{{ video.video_uid }}</code></p>
+  <p>
+    Check the actual private footage in the operator-controlled Cloudflare Stream
+    dashboard. The creator's rights and animal-topic declarations are not
+    independent verification. Inspect the content, animal welfare, safety,
+    prohibited species, advertising claims and copyright before approval.
+    Do not approve merely because processing finished.
+  </p>
+  <p>
+    <strong>Emergency removal:</strong> local takedown hides the video immediately.
+    If the provider cannot be reached, the pending sync requires an urgent
+    manual Cloudflare privacy action; do not assume an old direct URL is disabled.
+  </p>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button class="default" type="submit">Record reviewed decision</button>
+  </form>
+  <p><a href="{% url 'admin:social_videopost_changelist' %}">
+    Return to video review queue
+  </a></p>
+</section>
+{% endblock %}
