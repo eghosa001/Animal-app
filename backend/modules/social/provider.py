@@ -115,7 +115,7 @@ def set_video_private(video_uid, *, private):
             "Authorization": "Bearer " + settings.STREAM_API_TOKEN,
             "Content-Type": "application/json",
         },
-        method="PATCH",
+        method="POST",
     )
     try:
         with urllib.request.urlopen(request, timeout=8) as response:
@@ -127,5 +127,6 @@ def set_video_private(video_uid, *, private):
         or result.get("success") is not True
         or not isinstance(result.get("result"), dict)
         or result["result"].get("requireSignedURLs") is not private
+        or result["result"].get("uid", video_uid) != video_uid
     ):
         raise StreamUnavailable()
