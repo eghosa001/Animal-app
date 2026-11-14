@@ -125,11 +125,11 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
       api: widget.api,
       userId: widget.conversation.counterpartyId,
     );
-    if (blocked && mounted) setState(() { _blocked = true; });
+    if (blocked && mounted) { setState(() { _blocked = true; }); }
   }
 
   Future<void> _reportUser() async {
-    if (widget.conversation.counterpartyId.isEmpty) return;
+    if (widget.conversation.counterpartyId.isEmpty) { return; }
     await openSafetyReport(
       context: context,
       api: widget.api,
