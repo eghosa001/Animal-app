@@ -32,6 +32,7 @@ class AnimalListing {
     required this.speciesName,
     required this.animalName,
     required this.sellerName,
+    this.sellerId = '',
     required this.region,
     required this.currency,
     required this.priceMinor,
@@ -44,6 +45,7 @@ class AnimalListing {
   final String speciesName;
   final String animalName;
   final String sellerName;
+  final String sellerId;
   final String region;
   final String currency;
   final int priceMinor;
@@ -58,6 +60,7 @@ class AnimalListing {
       speciesName: species['name'] as String? ?? 'Animal',
       animalName: json['animal_name'] as String? ?? '',
       sellerName: json['seller_name'] as String? ?? '',
+      sellerId: json['seller_id']?.toString() ?? '',
       region: json['region'] as String? ?? '',
       currency: json['currency'] as String? ?? 'NGN',
       priceMinor: (json['price_minor'] as num?)?.toInt() ?? 0,
