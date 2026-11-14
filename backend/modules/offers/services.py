@@ -1,7 +1,6 @@
 """Row-locked offer negotiations, no checkout or payment state changes."""
 from datetime import timedelta
 
-from django.core.exceptions import PermissionDenied as DjangoPermissionDenied
 from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -111,11 +110,9 @@ def decide_offer(*, offer_id, actor, decision):
     if offer.status != AnimalOffer.Status.PENDING:
         raise ValidationError("This offer is no longer pending")
     if offer.expires_at <= timezone.now():
-        offer.status = AnimalOffer.Status.EXPIRED
-        offer.responded_at = timezone.now()
-        offer.save(update_fields=("status", "responded_at"))
-        _event(offer, actor, AnimalOffer.Status.PENDING,
-               AnimalOffer.Status.EXPIRED, "Offer expired before decision")
+        # The read serializer already displays the effective expired state;
+        # a later offer will record the expiry in a separate committed
+        # transaction. Raising here must not pretend a rolled-back state saved.
         raise ValidationError("This offer has expired")
 
     _require_available(conversation)
