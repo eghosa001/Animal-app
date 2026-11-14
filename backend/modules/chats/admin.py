@@ -27,4 +27,5 @@ class ConversationAdmin(admin.ModelAdmin):
 
 @admin.register(ChatMessage)
 class ChatMessageAdmin(ConversationAdmin):
-    pass
+    list_display = ("id", "created_at")
+    readonly_fields = ("id", "created_at")
