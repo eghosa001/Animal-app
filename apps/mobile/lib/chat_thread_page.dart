@@ -39,8 +39,8 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
   }
 
   Future<void> _load({required bool reset}) async {
-    if (_older || (reset && _busy)) return;
-    if (!reset && !_hasMore) return;
+    if (_older) { return; }
+    if (!reset && !_hasMore) { return; }
     if (mounted) {
       setState(() {
         if (reset) _loading = true;
@@ -53,7 +53,7 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
       final result = await widget.api.getConversationMessages(
         widget.conversation.id, page: page,
       );
-      if (!mounted) return;
+      if (!mounted) { return; }
       setState(() {
         if (reset) _messages = result.messages;
         else _messages.addAll(result.messages);
@@ -61,10 +61,10 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
         _page = page + 1;
       });
     } on ApiFailure catch (error) {
-      if (mounted) setState(() => _error = error.message);
+      if (mounted) { setState(() => _error = error.message); }
     } catch (_) {
-      if (mounted) setState(() =>
-          _error = 'Unable to load messages. Check your connection.');
+      if (mounted) { setState(() =>
+          _error = 'Unable to load messages. Check your connection.'); }
     } finally {
       if (mounted) {
         setState(() {
@@ -77,7 +77,7 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
 
   Future<void> _send() async {
     final text = _input.text.trim();
-    if (_busy || text.isEmpty || !widget.conversation.canSend) return;
+    if (_busy || text.isEmpty || !widget.conversation.canSend) { return; }
     if (text.length > 2000) {
       setState(() => _error = 'Messages cannot exceed 2000 characters.');
       return;
@@ -104,10 +104,10 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     } on ApiFailure catch (error) {
       if (mounted) setState(() => _error = error.message);
     } catch (_) {
-      if (mounted) setState(() =>
-          _error = 'Message status is uncertain; retry to avoid duplicates.');
+      if (mounted) { setState(() =>
+          _error = 'Message status is uncertain; retry to avoid duplicates.'); }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) { setState(() => _busy = false); }
     }
   }
 
