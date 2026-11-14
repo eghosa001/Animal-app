@@ -148,7 +148,7 @@ class ListingChatApiTests(APITestCase):
         messages = self.client.get(path)
         self.assertEqual(messages.status_code, 200)
         self.assertEqual(messages.data["count"], 2)
-        self.assertEqual(messages.data["results"][0]["sender"], str(self.seller.pk))
+        self.assertEqual(str(messages.data["results"][0]["sender"]), str(self.seller.pk))
         self.assertNotIn("chat-buyer@example.com", str(messages.data))
         self.assertEqual(ChatMessage.objects.count(), 2)
 
