@@ -31,7 +31,7 @@ class _BlockedAccountsPageState extends State<BlockedAccountsPage> {
   }
 
   Future<void> _unblock(String id) async {
-    if (_busyId != null) return;
+    if (_busyId != null) { return; }
     final accepted = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -52,22 +52,22 @@ class _BlockedAccountsPageState extends State<BlockedAccountsPage> {
         ],
       ),
     );
-    if (accepted != true || !mounted) return;
+    if (accepted != true || !mounted) { return; }
     setState(() {
       _busyId = id;
       _error = '';
     });
     try {
       await widget.api.unblockUser(id);
-      if (mounted) _refresh();
+      if (mounted) { _refresh(); }
     } on ApiFailure catch (error) {
-      if (mounted) setState(() { _error = error.message; });
+      if (mounted) { setState(() { _error = error.message; }); }
     } catch (_) {
       if (mounted) setState(() {
         _error = 'Could not unblock account. Try again.';
       });
     } finally {
-      if (mounted) setState(() { _busyId = null; });
+      if (mounted) { setState(() { _busyId = null; }); }
     }
   }
 
