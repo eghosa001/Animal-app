@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'listing_models.dart';
+import 'chat_models.dart';
 import 'video_feed_models.dart';
 
 import 'package:http_parser/http_parser.dart';
@@ -530,6 +532,109 @@ class ApiClient {
     } on TypeError {
       throw const ApiFailure('Unexpected creator video status response');
     }
+  }
+
+  /// Generate an RFC 4122 version-4 nonce from the OS cryptographic RNG.
+  /// Reuse this value when retrying one uncertain message delivery.
+  static String newChatNonce() {
+    final random = Random.secure();
+    final bytes = List<int>.generate(16, (_) => random.nextInt(256));
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    final hex = bytes.map((byte) =>
+        byte.toRadixString(16).padLeft(2, '0')).join();
+    return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-'
+        '${hex.substring(12, 16)}-${hex.substring(16, 20)}-'
+        '${hex.substring(20)}';
+  }
+
+  Future<Map<String, dynamic>> _authorizedChatPost(
+      String path, Map<String, dynamic> payload) async {
+    var token = await _storage.read(key: 'anima_access');
+    if (token == null) {
+      throw const ApiFailure('Sign in to message animal sellers');
+    }
+    var response = await _post(path, payload, token: token);
+    if (response.statusCode == 401) {
+      token = await _refresh();
+      if (token == null) {
+        throw const ApiFailure('Session expired. Sign in again.');
+      }
+      response = await _post(path, payload, token: token);
+    }
+    return _decode(response);
+  }
+
+  /// Returns only conversations that the currently signed-in user belongs to.
+  Future<List<ChatConversation>> getMyConversations() async {
+    final conversations = <ChatConversation>[];
+    for (var page = 1; page <= 100; page++) {
+      final response = await _authorizedGet(
+        '/api/v1/chats/conversations/?page=$page',
+      );
+      final data = _decode(response);
+      final rows = data['results'];
+      if (rows is! List) {
+        throw const ApiFailure('Unexpected chat inbox response');
+      }
+      try {
+        conversations.addAll(rows.map((row) =>
+            ChatConversation.fromJson(row as Map<String, dynamic>)));
+      } on TypeError {
+        throw const ApiFailure('Unexpected chat inbox response');
+      }
+      if (data['next'] == null) { return conversations; }
+    }
+    throw const ApiFailure('Too many conversations to load');
+  }
+
+  Future<ChatConversation> startChatForListing(String listingId) async {
+    if (!RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(listingId)) {
+      throw const ApiFailure('Invalid animal listing');
+    }
+    final data = await _authorizedChatPost(
+      '/api/v1/chats/conversations/', {'listing_id': listingId},
+    );
+    return ChatConversation.fromJson(data);
+  }
+
+  Future<ChatMessagePage> getConversationMessages(
+      String conversationId, {int page = 1}) async {
+    if (!RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(conversationId) || page < 1) {
+      throw const ApiFailure('Invalid conversation');
+    }
+    final response = await _authorizedGet(
+      '/api/v1/chats/conversations/$conversationId/messages/?page=$page',
+    );
+    final data = _decode(response);
+    final rows = data['results'];
+    if (rows is! List) {
+      throw const ApiFailure('Unexpected chat response');
+    }
+    try {
+      return ChatMessagePage(
+        messages: rows.map((row) =>
+            ChatMessage.fromJson(row as Map<String, dynamic>)).toList(),
+        hasMore: data['next'] != null,
+      );
+    } on TypeError {
+      throw const ApiFailure('Unexpected chat response');
+    }
+  }
+
+  Future<ChatMessage> sendChatMessage(
+      String conversationId, String body, {required String clientNonce}) async {
+    if (!RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(conversationId)) {
+      throw const ApiFailure('Invalid conversation');
+    }
+    if (body.trim().isEmpty || body.trim().length > 2000) {
+      throw const ApiFailure('Message must be 1–2000 characters');
+    }
+    final data = await _authorizedChatPost(
+      '/api/v1/chats/conversations/$conversationId/messages/',
+      {'body': body.trim(), 'client_nonce': clientNonce},
+    );
+    return ChatMessage.fromJson(data);
   }
 
   /// Public, paginated list of safety-reviewed videos.

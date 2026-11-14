@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     "modules.accounts",
     "modules.catalog",
     "modules.listings",
+    "modules.chats.apps.ChatsConfig",
     "modules.social.apps.SocialConfig",
     "modules.media.apps.MediaConfig",
 ]
@@ -95,6 +96,8 @@ REST_FRAMEWORK = {
         "auth_password_request": "5/hour",
         "auth_password_confirm": "12/hour",
         "auth_logout_all": "5/hour",
+        "chat_start": "15/hour",
+        "chat_send": "30/minute",
     },
 }
 # Shared Redis throttling is mandatory outside debug. In-process cache is
