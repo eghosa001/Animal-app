@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'core/api_client.dart';
+import 'chat_thread_page.dart';
 
 /// Read-only detail view from a moderated social video or the marketplace.
 class ListingDetailPage extends StatefulWidget {
@@ -18,6 +19,7 @@ class ListingDetailPage extends StatefulWidget {
 
 class _ListingDetailPageState extends State<ListingDetailPage> {
   late Future<AnimalListing> _listing;
+  bool _openingChat = false;
 
   @override
   void initState() {
@@ -27,6 +29,38 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
 
   void _retry() {
     setState(() => _listing = widget.api.getListing(widget.listingId));
+  }
+
+  Future<void> _messageSeller(AnimalListing listing) async {
+    if (_openingChat) return;
+    setState(() => _openingChat = true);
+    try {
+      final conversation = await widget.api.startChatForListing(listing.id);
+      if (!mounted) return;
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (context) => ChatThreadPage(
+            api: widget.api, conversation: conversation,
+          ),
+        ),
+      );
+    } on ApiFailure catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.message)),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text(
+            'Unable to start a conversation. Please try again.',
+          )),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _openingChat = false);
+    }
   }
 
   @override
@@ -87,13 +121,23 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
                     const SizedBox(height: 18),
                     Text(animal.description),
                     const SizedBox(height: 24),
+                    FilledButton.icon(
+                      onPressed: _openingChat
+                          ? null : () => _messageSeller(animal),
+                      icon: const Icon(Icons.chat_bubble_outline),
+                      label: Text(
+                        _openingChat ? 'Opening conversation…' : 'Message seller',
+                      ),
+                    ),
+                    const SizedBox(height: 10),
                     const Card(
                       child: Padding(
                         padding: EdgeInsets.all(16),
                         child: Text(
-                          'Messaging and protected checkout are not available yet. '
-                          'A public listing is not a guarantee of animal health '
-                          'or a promise of payment protection.',
+                          'Messaging stays on Anima, but protected checkout is '
+                          'not enabled. Do not send money outside the platform; '
+                          'off-platform deals are not protected. '
+                          'Listing approval is not a health guarantee.',
                         ),
                       ),
                     ),
