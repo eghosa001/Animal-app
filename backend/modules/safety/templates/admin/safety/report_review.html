@@ -1,0 +1,25 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<section style="max-width: 840px;">
+  <h2>Animal safety report</h2>
+  <p>Case: {{ report.id }} | Status: {{ report.get_status_display }}</p>
+  <p>Category: <strong>{{ report.get_category_display }}</strong></p>
+  <p>Reporter: {{ report.reporter.email }}</p>
+  <p>Video: {{ report.video_id|default:"—" }} | Listing:
+    {{ report.listing_id|default:"—" }} | Chat message:
+    {{ report.message_id|default:"—" }} | Subject user:
+    {{ report.subject_user_id|default:"—" }}</p>
+  <p>Reported details (untrusted user input): {{ report.detail }}</p>
+  <p>Review the actual evidence using authorized private systems. Do not
+    disclose reporter identities or chat contents outside the investigation.
+    Marking an incident "actioned" records a staff decision; it does not itself
+    revoke Stream playback, suspend a seller or issue a refund. Use the
+    appropriate existing moderation workflow and record the result.</p>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="default">Record staff decision</button>
+  </form>
+  <p><a href="{% url 'admin:safety_safetyreport_changelist' %}">Return to safety queue</a></p>
+</section>
+{% endblock %}
