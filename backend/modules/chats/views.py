@@ -110,7 +110,7 @@ class ConversationMessagesView(
         with transaction.atomic():
             # Validate again while holding the conversation lock, preventing
             # concurrent message writes from racing status changes.
-            locked = Conversation.objects.select_for_update().select_related(
+            locked = Conversation.objects.select_for_update(of=("self",)).select_related(
                 "buyer", "seller", "seller__seller_profile",
                 "listing", "listing__animal__species",
             ).get(pk=conversation.pk)
