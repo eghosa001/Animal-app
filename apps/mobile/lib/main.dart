@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'core/api_client.dart';
+import 'chat_inbox_page.dart';
 import 'create_hub_page.dart';
 import 'password_recovery_page.dart';
 import 'listing_detail_page.dart';
@@ -78,10 +79,9 @@ class _AppShellState extends State<AppShell> {
           onOpenAccount: () => setState(() => _selected = 4),
         );
       case 3:
-        body = const UpcomingPage(
-          icon: Icons.forum_outlined,
-          title: 'Buyer and seller messages',
-          message: 'Secure listing-linked chat and negotiated offers are planned for the next milestone.',
+        body = ChatInboxPage(
+          api: _api,
+          openAccount: () => setState(() => _selected = 4),
         );
       default:
         body = AccountPage(api: _api);
