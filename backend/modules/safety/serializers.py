@@ -5,9 +5,11 @@ from .models import SafetyReport, UserBlock
 
 
 class BlockReadSerializer(serializers.ModelSerializer):
+    blocked_name = serializers.CharField(source="blocked.display_name", read_only=True)
+
     class Meta:
         model = UserBlock
-        fields = ("id", "blocked", "created_at")
+        fields = ("id", "blocked", "blocked_name", "created_at")
         read_only_fields = fields
 
 
