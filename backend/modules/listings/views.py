@@ -1,4 +1,5 @@
 """Public listings, seller drafts, and guarded publication request."""
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
@@ -7,6 +8,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from modules.accounts.models import SellerProfile
+from modules.safety.models import UserBlock
 
 from .models import Listing
 from .serializers import ListingCreateSerializer, ListingReadSerializer
@@ -26,12 +28,23 @@ class ListingViewSet(
         queryset = Listing.objects.select_related("animal__species", "seller")
         if self.action in ("mine", "submit", "partial_update"):
             return queryset.filter(seller=self.request.user) if self.request.user.is_authenticated else queryset.none()
-        return queryset.filter(
+        public = queryset.filter(
             status=Listing.Status.ACTIVE,
             seller__seller_profile__status=SellerProfile.Status.APPROVED,
             seller__is_active=True,
             animal__species__trade_enabled=True,
         )
+        if self.request.user.is_authenticated:
+            outgoing = UserBlock.objects.filter(
+                blocker=self.request.user,
+            ).values("blocked_id")
+            incoming = UserBlock.objects.filter(
+                blocked=self.request.user,
+            ).values("blocker_id")
+            public = public.exclude(
+                Q(seller_id__in=outgoing) | Q(seller_id__in=incoming)
+            )
+        return public
 
     def get_serializer_class(self):
         return ListingCreateSerializer if self.action in ("create", "partial_update") else ListingReadSerializer
