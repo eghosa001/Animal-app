@@ -1,8 +1,10 @@
 """Only conversation participants ever receive message or counterparty details."""
+from django.db.models import Q
 from rest_framework import serializers
 
 from modules.accounts.models import SellerProfile
 from modules.listings.models import Listing
+from modules.safety.models import UserBlock
 
 from .models import ChatMessage, Conversation
 
@@ -11,8 +13,13 @@ def chat_is_writable(conversation):
     """Conversation history survives sales; new contact requires an eligible listing."""
     listing = conversation.listing
     seller_profile = getattr(conversation.seller, "seller_profile", None)
+    blocked = UserBlock.objects.filter(
+        Q(blocker=conversation.buyer, blocked=conversation.seller)
+        | Q(blocker=conversation.seller, blocked=conversation.buyer)
+    ).exists()
     return (
-        listing.status == Listing.Status.ACTIVE
+        not blocked
+        and listing.status == Listing.Status.ACTIVE
         and listing.animal.species.trade_enabled
         and conversation.buyer.is_active
         and conversation.seller.is_active
@@ -25,12 +32,13 @@ def chat_is_writable(conversation):
 class ConversationReadSerializer(serializers.ModelSerializer):
     listing_title = serializers.CharField(source="listing.title", read_only=True)
     counterparty_name = serializers.SerializerMethodField()
+    counterparty_id = serializers.SerializerMethodField()
     can_send = serializers.SerializerMethodField()
 
     class Meta:
         model = Conversation
         fields = (
-            "id", "listing", "listing_title", "counterparty_name",
+            "id", "listing", "listing_title", "counterparty_name", "counterparty_id",
             "can_send", "created_at", "updated_at",
         )
         read_only_fields = fields
@@ -41,6 +49,10 @@ class ConversationReadSerializer(serializers.ModelSerializer):
             obj.seller.display_name if user.pk == obj.buyer_id
             else obj.buyer.display_name
         )
+
+    def get_counterparty_id(self, obj):
+        user = self.context["request"].user
+        return obj.seller_id if user.pk == obj.buyer_id else obj.buyer_id
 
     def get_can_send(self, obj):
         return chat_is_writable(obj)
