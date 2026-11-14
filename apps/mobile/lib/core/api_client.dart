@@ -583,198 +583,24 @@ class ApiClient {
       } on TypeError {
         throw const ApiFailure('Unexpected chat inbox response');
       }
-      if (data['next'] == null) return conversations;
+      if (data['next'] == null) { return conversations; }
     }
     throw const ApiFailure('Too many conversations to load');
   }
 
   Future<ChatConversation> startChatForListing(String listingId) async {
-    if (!RegExp(r'^[0-9a-fA-F-]{36}
-  Future<AnimalVideoPage> getVideoFeed({int page = 1}) async {
-    if (page < 1) throw const ApiFailure('Invalid video page');
-    final response = await _client.get(
-      _uri('/api/v1/feed/videos/?page=$page'),
-    ).timeout(const Duration(seconds: 15));
-    final data = _decode(response);
-    final raw = data['results'];
-    if (raw is! List) throw const ApiFailure('Unexpected video response');
-    try {
-      return AnimalVideoPage(
-        posts: raw.map((item) =>
-            AnimalVideoPost.fromJson(item as Map<String, dynamic>)).toList(),
-        hasMore: data['next'] != null,
-      );
-    } on FormatException {
-      throw const ApiFailure('Unsupported video source');
-    } on TypeError {
-      throw const ApiFailure('Unexpected video response');
-    }
-  }
-
-  Future<AnimalListing> getListing(String id) async {
-    if (!RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(id)) {
+    if (!RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(listingId)) {
       throw const ApiFailure('Invalid animal listing');
     }
-    final response = await _client.get(
-      _uri('/api/v1/listings/$id/'),
-    ).timeout(const Duration(seconds: 15));
-    return AnimalListing.fromJson(_decode(response));
-  }
-
-  Future<List<AnimalListing>> getListings() async {
-    final response = await _client.get(
-      _uri('/api/v1/listings/'),
-    ).timeout(const Duration(seconds: 15));
-    final payload = _decode(response);
-    final raw = payload['results'] as List<dynamic>? ?? [];
-    return raw.map((item) => AnimalListing.fromJson(item as Map<String, dynamic>)).toList();
-  }
-
-  /// Revoke every existing access and refresh session after password confirmation.
-  /// Clear this phone only after the server confirms revocation; never report
-  /// success on an HTTP error or network failure.
-  Future<void> logoutAll(String currentPassword) async {
-    Future<http.Response> send(String access) => _post(
-      '/api/v1/auth/logout-all',
-      {'current_password': currentPassword},
-      token: access,
+    final data = await _authorizedChatPost(
+      '/api/v1/chats/conversations/', {'listing_id': listingId},
     );
-
-    var access = await _storage.read(key: 'anima_access');
-    if (access == null) {
-      throw const ApiFailure('Please sign in to manage account sessions');
-    }
-    var response = await send(access);
-    if (response.statusCode == 401) {
-      access = await _refresh();
-      if (access == null) {
-        throw const ApiFailure('Session expired. Sign in again.');
-      }
-      response = await send(access);
-    }
-    if (response.statusCode != 204) {
-      _decode(response);
-      throw const ApiFailure('Could not sign out other devices');
-    }
-    await _storage.delete(key: 'anima_access');
-    await _storage.delete(key: 'anima_refresh');
-  }
-
-  Future<void> logout() async {
-    final refresh = await _storage.read(key: 'anima_refresh');
-    final access = await _storage.read(key: 'anima_access');
-    try {
-      if (refresh != null && access != null) {
-        await _post('/api/v1/auth/logout', {'refresh': refresh}, token: access);
-      }
-    } finally {
-      await _storage.delete(key: 'anima_access');
-      await _storage.delete(key: 'anima_refresh');
-    }
-  }
-
-  void dispose() => _client.close();
-}
-).hasMatch(listingId)) {
-      throw const ApiFailure('Invalid animal listing');
-    }
-    final response = await _authorizedChatPost(
-      '/api/v1/chats/conversations/',
-      {'listing_id': listingId},
-    );
-    return ChatConversation.fromJson(response);
+    return ChatConversation.fromJson(data);
   }
 
   Future<ChatMessagePage> getConversationMessages(
       String conversationId, {int page = 1}) async {
-    if (!RegExp(r'^[0-9a-fA-F-]{36}
-  Future<AnimalVideoPage> getVideoFeed({int page = 1}) async {
-    if (page < 1) throw const ApiFailure('Invalid video page');
-    final response = await _client.get(
-      _uri('/api/v1/feed/videos/?page=$page'),
-    ).timeout(const Duration(seconds: 15));
-    final data = _decode(response);
-    final raw = data['results'];
-    if (raw is! List) throw const ApiFailure('Unexpected video response');
-    try {
-      return AnimalVideoPage(
-        posts: raw.map((item) =>
-            AnimalVideoPost.fromJson(item as Map<String, dynamic>)).toList(),
-        hasMore: data['next'] != null,
-      );
-    } on FormatException {
-      throw const ApiFailure('Unsupported video source');
-    } on TypeError {
-      throw const ApiFailure('Unexpected video response');
-    }
-  }
-
-  Future<AnimalListing> getListing(String id) async {
-    if (!RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(id)) {
-      throw const ApiFailure('Invalid animal listing');
-    }
-    final response = await _client.get(
-      _uri('/api/v1/listings/$id/'),
-    ).timeout(const Duration(seconds: 15));
-    return AnimalListing.fromJson(_decode(response));
-  }
-
-  Future<List<AnimalListing>> getListings() async {
-    final response = await _client.get(
-      _uri('/api/v1/listings/'),
-    ).timeout(const Duration(seconds: 15));
-    final payload = _decode(response);
-    final raw = payload['results'] as List<dynamic>? ?? [];
-    return raw.map((item) => AnimalListing.fromJson(item as Map<String, dynamic>)).toList();
-  }
-
-  /// Revoke every existing access and refresh session after password confirmation.
-  /// Clear this phone only after the server confirms revocation; never report
-  /// success on an HTTP error or network failure.
-  Future<void> logoutAll(String currentPassword) async {
-    Future<http.Response> send(String access) => _post(
-      '/api/v1/auth/logout-all',
-      {'current_password': currentPassword},
-      token: access,
-    );
-
-    var access = await _storage.read(key: 'anima_access');
-    if (access == null) {
-      throw const ApiFailure('Please sign in to manage account sessions');
-    }
-    var response = await send(access);
-    if (response.statusCode == 401) {
-      access = await _refresh();
-      if (access == null) {
-        throw const ApiFailure('Session expired. Sign in again.');
-      }
-      response = await send(access);
-    }
-    if (response.statusCode != 204) {
-      _decode(response);
-      throw const ApiFailure('Could not sign out other devices');
-    }
-    await _storage.delete(key: 'anima_access');
-    await _storage.delete(key: 'anima_refresh');
-  }
-
-  Future<void> logout() async {
-    final refresh = await _storage.read(key: 'anima_refresh');
-    final access = await _storage.read(key: 'anima_access');
-    try {
-      if (refresh != null && access != null) {
-        await _post('/api/v1/auth/logout', {'refresh': refresh}, token: access);
-      }
-    } finally {
-      await _storage.delete(key: 'anima_access');
-      await _storage.delete(key: 'anima_refresh');
-    }
-  }
-
-  void dispose() => _client.close();
-}
-).hasMatch(conversationId) ||
-        page < 1) {
+    if (!RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(conversationId) || page < 1) {
       throw const ApiFailure('Invalid conversation');
     }
     final response = await _authorizedGet(
@@ -796,96 +622,9 @@ class ApiClient {
     }
   }
 
-  /// Client nonce is kept stable across access-token refresh or a retry.
   Future<ChatMessage> sendChatMessage(
       String conversationId, String body, {required String clientNonce}) async {
-    if (!RegExp(r'^[0-9a-fA-F-]{36}
-  Future<AnimalVideoPage> getVideoFeed({int page = 1}) async {
-    if (page < 1) throw const ApiFailure('Invalid video page');
-    final response = await _client.get(
-      _uri('/api/v1/feed/videos/?page=$page'),
-    ).timeout(const Duration(seconds: 15));
-    final data = _decode(response);
-    final raw = data['results'];
-    if (raw is! List) throw const ApiFailure('Unexpected video response');
-    try {
-      return AnimalVideoPage(
-        posts: raw.map((item) =>
-            AnimalVideoPost.fromJson(item as Map<String, dynamic>)).toList(),
-        hasMore: data['next'] != null,
-      );
-    } on FormatException {
-      throw const ApiFailure('Unsupported video source');
-    } on TypeError {
-      throw const ApiFailure('Unexpected video response');
-    }
-  }
-
-  Future<AnimalListing> getListing(String id) async {
-    if (!RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(id)) {
-      throw const ApiFailure('Invalid animal listing');
-    }
-    final response = await _client.get(
-      _uri('/api/v1/listings/$id/'),
-    ).timeout(const Duration(seconds: 15));
-    return AnimalListing.fromJson(_decode(response));
-  }
-
-  Future<List<AnimalListing>> getListings() async {
-    final response = await _client.get(
-      _uri('/api/v1/listings/'),
-    ).timeout(const Duration(seconds: 15));
-    final payload = _decode(response);
-    final raw = payload['results'] as List<dynamic>? ?? [];
-    return raw.map((item) => AnimalListing.fromJson(item as Map<String, dynamic>)).toList();
-  }
-
-  /// Revoke every existing access and refresh session after password confirmation.
-  /// Clear this phone only after the server confirms revocation; never report
-  /// success on an HTTP error or network failure.
-  Future<void> logoutAll(String currentPassword) async {
-    Future<http.Response> send(String access) => _post(
-      '/api/v1/auth/logout-all',
-      {'current_password': currentPassword},
-      token: access,
-    );
-
-    var access = await _storage.read(key: 'anima_access');
-    if (access == null) {
-      throw const ApiFailure('Please sign in to manage account sessions');
-    }
-    var response = await send(access);
-    if (response.statusCode == 401) {
-      access = await _refresh();
-      if (access == null) {
-        throw const ApiFailure('Session expired. Sign in again.');
-      }
-      response = await send(access);
-    }
-    if (response.statusCode != 204) {
-      _decode(response);
-      throw const ApiFailure('Could not sign out other devices');
-    }
-    await _storage.delete(key: 'anima_access');
-    await _storage.delete(key: 'anima_refresh');
-  }
-
-  Future<void> logout() async {
-    final refresh = await _storage.read(key: 'anima_refresh');
-    final access = await _storage.read(key: 'anima_access');
-    try {
-      if (refresh != null && access != null) {
-        await _post('/api/v1/auth/logout', {'refresh': refresh}, token: access);
-      }
-    } finally {
-      await _storage.delete(key: 'anima_access');
-      await _storage.delete(key: 'anima_refresh');
-    }
-  }
-
-  void dispose() => _client.close();
-}
-).hasMatch(conversationId)) {
+    if (!RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(conversationId)) {
       throw const ApiFailure('Invalid conversation');
     }
     if (body.trim().isEmpty || body.trim().length > 2000) {
