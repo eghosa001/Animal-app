@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'listing_models.dart';
 import 'chat_models.dart';
+import 'offer_models.dart';
 import 'video_feed_models.dart';
 
 import 'package:http_parser/http_parser.dart';
@@ -716,6 +717,60 @@ class ApiClient {
       throw const ApiFailure('Report could not be confirmed');
     }
     return id;
+  }
+
+  /// Only conversation participants can see each quote and negotiation history.
+  Future<List<AnimalOfferQuote>> getConversationOffers(
+      String conversationId) async {
+    if (!RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(conversationId)) {
+      throw const ApiFailure('Invalid animal conversation');
+    }
+    final all = <AnimalOfferQuote>[];
+    for (var page = 1; page <= 100; page++) {
+      final response = await _authorizedGet(
+        '/api/v1/offers/conversations/$conversationId/?page=$page',
+      );
+      final data = _decode(response);
+      final raw = data['results'];
+      if (raw is! List) {
+        throw const ApiFailure('Unexpected offer response');
+      }
+      try {
+        all.addAll(raw.map((row) =>
+            AnimalOfferQuote.fromJson(row as Map<String, dynamic>)));
+      } on TypeError {
+        throw const ApiFailure('Unexpected offer response');
+      }
+      if (data['next'] == null) { return all; }
+    }
+    throw const ApiFailure('Too many offers to load');
+  }
+
+  /// This records a price quote only; it NEVER authorizes or submits payment.
+  Future<AnimalOfferQuote> proposeAnimalOffer(
+      String conversationId, int amountMinor, {required String clientNonce}) async {
+    if (!RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(conversationId) ||
+        amountMinor < 1 || amountMinor > NairaMoney.maxMinor) {
+      throw const ApiFailure('Enter a valid positive price');
+    }
+    final data = await _authorizedChatPost(
+      '/api/v1/offers/conversations/$conversationId/',
+      {'amount_minor': amountMinor, 'client_nonce': clientNonce},
+    );
+    return AnimalOfferQuote.fromJson(data);
+  }
+
+  Future<AnimalOfferQuote> decideAnimalOffer(
+      String offerId, String decision) async {
+    if (!RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(offerId) ||
+        (decision != 'accept' && decision != 'decline')) {
+      throw const ApiFailure('Invalid offer decision');
+    }
+    final data = await _authorizedChatPost(
+      '/api/v1/offers/$offerId/decision/',
+      {'decision': decision},
+    );
+    return AnimalOfferQuote.fromJson(data);
   }
 
   /// Public, paginated list of safety-reviewed videos.
