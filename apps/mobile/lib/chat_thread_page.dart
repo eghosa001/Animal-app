@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'core/api_client.dart';
 import 'core/chat_models.dart';
+import 'safety_actions.dart';
 
 /// Safe, text-only conversation with one approved animal listing as context.
 class ChatThreadPage extends StatefulWidget {
@@ -25,6 +26,7 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
   List<ChatMessage> _messages = [];
   bool _loading = true;
   bool _busy = false;
+  bool _blocked = false;
   bool _older = false;
   bool _hasMore = false;
   int _page = 1;
@@ -83,7 +85,7 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
 
   Future<void> _send() async {
     final text = _input.text.trim();
-    if (_busy || text.isEmpty || !widget.conversation.canSend) { return; }
+    if (_busy || text.isEmpty || !widget.conversation.canSend || _blocked) { return; }
     if (text.length > 2000) {
       setState(() => _error = 'Messages cannot exceed 2000 characters.');
       return;
@@ -117,6 +119,34 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
     }
   }
 
+  Future<void> _blockCounterparty() async {
+    final blocked = await confirmBlockAccount(
+      context: context,
+      api: widget.api,
+      userId: widget.conversation.counterpartyId,
+    );
+    if (blocked && mounted) setState(() { _blocked = true; });
+  }
+
+  Future<void> _reportUser() async {
+    if (widget.conversation.counterpartyId.isEmpty) return;
+    await openSafetyReport(
+      context: context,
+      api: widget.api,
+      targetType: 'user',
+      targetId: widget.conversation.counterpartyId,
+    );
+  }
+
+  Future<void> _reportMessage(String id) async {
+    await openSafetyReport(
+      context: context,
+      api: widget.api,
+      targetType: 'message',
+      targetId: id,
+    );
+  }
+
   @override
   void dispose() {
     _input.dispose();
@@ -127,7 +157,32 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.conversation.counterpartyName)),
+      appBar: AppBar(
+        title: Text(widget.conversation.counterpartyName),
+        actions: [
+          PopupMenuButton<String>(
+            tooltip: 'Conversation safety options',
+            onSelected: (action) {
+              if (action == 'report') {
+                unawaited(_reportUser());
+              } else if (action == 'block') {
+                unawaited(_blockCounterparty());
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'report',
+                child: Text('Report account'),
+              ),
+              if (!_blocked)
+                const PopupMenuItem(
+                  value: 'block',
+                  child: Text('Block account'),
+                ),
+            ],
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Material(
@@ -180,7 +235,17 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
                                         style: const TextStyle(
                                             fontWeight: FontWeight.w600)),
                                     const SizedBox(height: 3),
-                                    Text(item.body),
+                                    Row(
+                                      children: [
+                                        Expanded(child: Text(item.body)),
+                                        IconButton(
+                                          tooltip: 'Report message',
+                                          onPressed: () =>
+                                              unawaited(_reportMessage(item.id)),
+                                          icon: const Icon(Icons.flag_outlined),
+                                        ),
+                                      ],
+                                    ),
                                   ],
                                 ),
                               ),
@@ -196,7 +261,7 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
                     ),
                   ),
           ),
-          if (widget.conversation.canSend)
+          if (widget.conversation.canSend && !_blocked)
             SafeArea(
               top: false,
               child: Padding(
