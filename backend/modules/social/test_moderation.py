@@ -220,6 +220,7 @@ class StreamVisibilityApiTests(APITestCase):
             {"success": True, "result": {"uid": "e" * 32, "requireSignedURLs": True}},
             {"success": True, "result": {"uid": "f" * 32, "requireSignedURLs": False}},
             {"success": False, "result": {"uid": "f" * 32, "requireSignedURLs": True}},
+            {"success": True, "result": {"requireSignedURLs": True}},
         ):
             response = MagicMock()
             response.__enter__.return_value.read.return_value = json.dumps(payload).encode()
