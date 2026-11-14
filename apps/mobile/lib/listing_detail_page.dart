@@ -32,11 +32,11 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
   }
 
   Future<void> _messageSeller(AnimalListing listing) async {
-    if (_openingChat) return;
+    if (_openingChat) { return; }
     setState(() => _openingChat = true);
     try {
       final conversation = await widget.api.startChatForListing(listing.id);
-      if (!mounted) return;
+      if (!mounted) { return; }
       await Navigator.of(context).push<void>(
         MaterialPageRoute<void>(
           builder: (context) => ChatThreadPage(
@@ -59,7 +59,7 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
         );
       }
     } finally {
-      if (mounted) setState(() => _openingChat = false);
+      if (mounted) { setState(() => _openingChat = false); }
     }
   }
 
