@@ -35,7 +35,7 @@ class BlocksView(WriteRateMixin, generics.ListCreateAPIView):
     def get_queryset(self):
         return UserBlock.objects.filter(
             blocker=self.request.user,
-        ).order_by("-created_at")
+        ).select_related("blocked").order_by("-created_at")
 
     def create(self, request, *args, **kwargs):
         if not request.user.is_active:
