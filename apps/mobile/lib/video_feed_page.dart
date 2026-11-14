@@ -5,6 +5,7 @@ import 'package:video_player/video_player.dart';
 
 import 'core/api_client.dart';
 import 'core/video_feed_models.dart';
+import 'safety_actions.dart';
 
 /// Full-height vertical feed. The server supplies only reviewed/processed clips.
 class VideoFeedPage extends StatefulWidget {
@@ -130,7 +131,9 @@ class _VideoFeedPageState extends State<VideoFeedPage> {
           return _AnimalVideoTile(
             key: ValueKey(post.id),
             post: post,
+            api: widget.api,
             active: index == _active,
+            onBlocked: () => unawaited(_loadPage(reset: true)),
             openListing: widget.openListing,
           );
         },
@@ -186,11 +189,15 @@ class _VideoFeedPageState extends State<VideoFeedPage> {
 class _AnimalVideoTile extends StatefulWidget {
   const _AnimalVideoTile({
     required this.post,
+    required this.api,
+    required this.onBlocked,
     required this.active,
     required this.openListing,
     super.key,
   });
   final AnimalVideoPost post;
+  final ApiClient api;
+  final VoidCallback onBlocked;
   final bool active;
   final Future<void> Function(String) openListing;
 
@@ -291,6 +298,34 @@ class _AnimalVideoTileState extends State<_AnimalVideoTile>
     }
   }
 
+  Future<void> _reportClip() async {
+    final controller = _controller;
+    if (controller != null && _ready) {
+      await controller.pause();
+    }
+    if (!mounted) return;
+    await openSafetyReport(
+      context: context,
+      api: widget.api,
+      targetType: 'video',
+      targetId: widget.post.id,
+    );
+    if (mounted && widget.active && _ready && controller == _controller) {
+      await controller?.play();
+    }
+  }
+
+  Future<void> _blockCreator() async {
+    final blocked = await confirmBlockAccount(
+      context: context,
+      api: widget.api,
+      userId: widget.post.creatorId,
+    );
+    if (blocked && mounted) {
+      widget.onBlocked();
+    }
+  }
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
@@ -355,6 +390,24 @@ class _AnimalVideoTileState extends State<_AnimalVideoTile>
                   iconSize: 30,
                   icon: Icon(_muted ? Icons.volume_off : Icons.volume_up),
                 ),
+                const SizedBox(height: 12),
+                IconButton(
+                  tooltip: 'Report video',
+                  onPressed: () => unawaited(_reportClip()),
+                  color: Colors.white,
+                  iconSize: 28,
+                  icon: const Icon(Icons.flag_outlined),
+                ),
+                if (widget.post.creatorId.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  IconButton(
+                    tooltip: 'Block creator',
+                    onPressed: () => unawaited(_blockCreator()),
+                    color: Colors.white,
+                    iconSize: 28,
+                    icon: const Icon(Icons.block),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 IconButton(
                   tooltip: controller?.value.isPlaying == true ? 'Pause video' : 'Play video',

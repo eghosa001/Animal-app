@@ -10,13 +10,14 @@ from .models import VideoPost
 
 class VideoPostSerializer(serializers.ModelSerializer):
     creator_name = serializers.CharField(source="creator.display_name", read_only=True)
+    creator_id = serializers.UUIDField(read_only=True)
     playback_url = serializers.SerializerMethodField()
     poster_url = serializers.SerializerMethodField()
     listing = serializers.SerializerMethodField()
 
     class Meta:
         model = VideoPost
-        fields = ("id", "creator_name", "caption", "playback_url", "poster_url", "listing", "created_at")
+        fields = ("id", "creator_id", "creator_name", "caption", "playback_url", "poster_url", "listing", "created_at")
         read_only_fields = fields
 
     def get_playback_url(self, obj):

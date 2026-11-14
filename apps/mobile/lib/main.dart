@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'core/api_client.dart';
+import 'blocked_accounts_page.dart';
 import 'chat_inbox_page.dart';
 import 'create_hub_page.dart';
 import 'password_recovery_page.dart';
@@ -473,6 +474,15 @@ class _AccountPageState extends State<AccountPage> {
               label: const Text('Upload animal photos or verification'),
             ),
           ],
+          OutlinedButton.icon(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (context) => BlockedAccountsPage(api: widget.api),
+              ),
+            ),
+            icon: const Icon(Icons.block),
+            label: const Text('Manage blocked accounts'),
+          ),
           OutlinedButton.icon(
             onPressed: _busy ? null : () async {
               final revoked = await Navigator.of(context).push<bool>(

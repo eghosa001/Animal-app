@@ -3,6 +3,7 @@ class AnimalVideoPost {
   const AnimalVideoPost({
     required this.id,
     required this.creatorName,
+    this.creatorId = '',
     required this.caption,
     required this.playbackUrl,
     required this.posterUrl,
@@ -11,6 +12,7 @@ class AnimalVideoPost {
 
   final String id;
   final String creatorName;
+  final String creatorId;
   final String caption;
   final String playbackUrl;
   final String posterUrl;
@@ -25,6 +27,7 @@ class AnimalVideoPost {
     return AnimalVideoPost(
       id: json['id']?.toString() ?? '',
       creatorName: json['creator_name']?.toString() ?? 'Animal creator',
+      creatorId: json['creator_id']?.toString() ?? '',
       caption: json['caption']?.toString() ?? '',
       playbackUrl: playback.toString(),
       posterUrl: json['poster_url']?.toString() ?? '',

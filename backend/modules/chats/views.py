@@ -11,6 +11,7 @@ from rest_framework.throttling import ScopedRateThrottle
 
 from modules.accounts.models import SellerProfile
 from modules.listings.models import Listing
+from modules.safety.models import UserBlock
 
 from .models import ChatMessage, Conversation
 from .serializers import (
@@ -62,6 +63,11 @@ class ConversationsView(ParticipantThrottleMixin, generics.ListCreateAPIView):
         )
         if listing.seller_id == request.user.pk:
             raise ValidationError({"listing_id": "Cannot message your own listing"})
+        if UserBlock.objects.filter(
+            Q(blocker=request.user, blocked=listing.seller)
+            | Q(blocker=listing.seller, blocked=request.user)
+        ).exists():
+            raise PermissionDenied("Messaging is not available for this account")
         with transaction.atomic():
             conversation, created = Conversation.objects.get_or_create(
                 listing=listing, buyer=request.user,

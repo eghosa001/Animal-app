@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'core/api_client.dart';
 import 'chat_thread_page.dart';
+import 'safety_actions.dart';
 
 /// Read-only detail view from a moderated social video or the marketplace.
 class ListingDetailPage extends StatefulWidget {
@@ -60,6 +61,25 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
       }
     } finally {
       if (mounted) { setState(() => _openingChat = false); }
+    }
+  }
+
+  Future<void> _reportListing(AnimalListing animal) => openSafetyReport(
+    context: context,
+    api: widget.api,
+    targetType: 'listing',
+    targetId: animal.id,
+  );
+
+  Future<void> _blockSeller(AnimalListing animal) async {
+    if (animal.sellerId.isEmpty) { return; }
+    final blocked = await confirmBlockAccount(
+      context: context,
+      api: widget.api,
+      userId: animal.sellerId,
+    );
+    if (blocked && mounted) {
+      Navigator.of(context).maybePop();
     }
   }
 
@@ -128,6 +148,28 @@ class _ListingDetailPageState extends State<ListingDetailPage> {
                       label: Text(
                         _openingChat ? 'Opening conversation…' : 'Message seller',
                       ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => _reportListing(animal),
+                            icon: const Icon(Icons.flag_outlined),
+                            label: const Text('Report listing'),
+                          ),
+                        ),
+                        if (animal.sellerId.isNotEmpty) ...[
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => _blockSeller(animal),
+                              icon: const Icon(Icons.block),
+                              label: const Text('Block seller'),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 10),
                     const Card(
