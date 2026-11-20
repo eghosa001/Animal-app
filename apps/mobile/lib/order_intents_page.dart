@@ -33,7 +33,7 @@ class _OrderIntentsPageState extends State<OrderIntentsPage> {
 
   Future<void> _cancel(OrderIntentReceipt request) async {
     if (_busyId != null || request.status != 'awaiting_partner') { return; }
-    final controller = TextEditingController();
+    var cancellationReason = '';
     final reason = await showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -48,7 +48,7 @@ class _OrderIntentsPageState extends State<OrderIntentsPage> {
             const SizedBox(height: 12),
             TextField(
               key: const Key('cancel-order-reason'),
-              controller: controller,
+              onChanged: (value) => cancellationReason = value,
               maxLength: 240,
               minLines: 2,
               maxLines: 3,
@@ -67,14 +67,13 @@ class _OrderIntentsPageState extends State<OrderIntentsPage> {
           FilledButton(
             key: const Key('confirm-cancel-request'),
             onPressed: () => Navigator.of(dialogContext).pop(
-              controller.text.trim(),
+              cancellationReason.trim(),
             ),
             child: const Text('Cancel request'),
           ),
         ],
       ),
     );
-    controller.dispose();
     if (!mounted || reason == null) { return; }
     if (reason.length < 20 || reason.length > 240) {
       setState(() {
