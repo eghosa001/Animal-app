@@ -75,7 +75,7 @@ class FakeOrderApi extends ApiClient {
 
   @override
   Future<OrderIntentReceipt> createUnfundedOrderIntent(
-    String acceptedOfferId, {required String requestNonce},
+    String acceptedOfferId, {required String requestNonce}
   ) async {
     expect(acceptedOfferId, offerId);
     created++;
