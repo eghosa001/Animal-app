@@ -33,12 +33,13 @@ class ConversationReadSerializer(serializers.ModelSerializer):
     listing_title = serializers.CharField(source="listing.title", read_only=True)
     counterparty_name = serializers.SerializerMethodField()
     counterparty_id = serializers.SerializerMethodField()
+    buyer_id = serializers.UUIDField(read_only=True)
     can_send = serializers.SerializerMethodField()
 
     class Meta:
         model = Conversation
         fields = (
-            "id", "listing", "listing_title", "counterparty_name", "counterparty_id",
+            "id", "listing", "listing_title", "counterparty_name", "counterparty_id", "buyer_id",
             "can_send", "created_at", "updated_at",
         )
         read_only_fields = fields

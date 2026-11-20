@@ -20,5 +20,6 @@ urlpatterns = [
     path("api/v1/chats/", include("modules.chats.urls")),
     path("api/v1/safety/", include("modules.safety.urls")),
     path("api/v1/offers/", include("modules.offers.urls")),
+    path("api/v1/orders/", include("modules.orders.urls")),
     path("api/v1/", include(router.urls)),
 ]

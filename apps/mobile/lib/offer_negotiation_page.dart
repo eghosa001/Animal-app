@@ -4,6 +4,7 @@ import 'core/api_client.dart';
 import 'core/chat_models.dart';
 import 'core/listing_models.dart';
 import 'core/offer_models.dart';
+import 'order_intents_page.dart';
 
 class _OfferScreenData {
   const _OfferScreenData({required this.currentUserId, required this.offers});
@@ -32,6 +33,8 @@ class _OfferNegotiationPageState extends State<OfferNegotiationPage> {
   String _error = '';
   String? _pendingNonce;
   int? _pendingAmount;
+  String? _pendingIntentNonce;
+  String? _pendingIntentOffer;
 
   @override
   void initState() {
@@ -142,6 +145,64 @@ class _OfferNegotiationPageState extends State<OfferNegotiationPage> {
     }
   }
 
+  Future<void> _prepareUnfundedIntent(AnimalOfferQuote offer) async {
+    if (_busy || offer.status != 'accepted') { return; }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Prepare an order request?'),
+        content: Text(
+          'This records your agreed price of ${offer.amountDisplay} '
+          'and this animal\'s identity for future protected checkout. '
+          'There is NO checkout, payment, fund custody, animal '
+          'reservation or delivery guarantee now. Do not send money '
+          'directly to the seller.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Not now'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('I understand — save request'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) { return; }
+    if (_pendingIntentOffer != offer.id || _pendingIntentNonce == null) {
+      _pendingIntentOffer = offer.id;
+      _pendingIntentNonce = ApiClient.newChatNonce();
+    }
+    setState(() {
+      _busy = true;
+      _error = '';
+    });
+    try {
+      await widget.api.createUnfundedOrderIntent(
+        offer.id, requestNonce: _pendingIntentNonce!,
+      );
+      if (!mounted) { return; }
+      _pendingIntentNonce = null;
+      _pendingIntentOffer = null;
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (context) => OrderIntentsPage(api: widget.api),
+        ),
+      );
+    } on ApiFailure catch (error) {
+      if (mounted) { setState(() { _error = error.message; }); }
+    } catch (_) {
+      if (mounted) {
+        setState(() { _error =
+          'Request status uncertain; retry the same accepted offer to avoid duplicates.'; });
+      }
+    } finally {
+      if (mounted) { setState(() { _busy = false; }); }
+    }
+  }
+
   @override
   void dispose() {
     _amount.dispose();
@@ -193,14 +254,33 @@ class _OfferNegotiationPageState extends State<OfferNegotiationPage> {
                 )),
                 const SizedBox(height: 12),
               ],
-              if (hasAccepted)
+              if (hasAccepted) ...[
                 const Card(child: Padding(
                   padding: EdgeInsets.all(14),
                   child: Text(
                     'Price agreed. Payment and protected checkout remain unavailable.',
                   ),
-                ))
-              else if (canPropose) ...[
+                )),
+                if (widget.conversation.buyerId == data.currentUserId) ...[
+                  const SizedBox(height: 10),
+                  FilledButton.icon(
+                    key: const Key('prepare-unfunded-order'),
+                    onPressed: _busy ? null : () => _prepareUnfundedIntent(
+                      data.offers.firstWhere((offer) => offer.status == 'accepted'),
+                    ),
+                    icon: const Icon(Icons.receipt_long_outlined),
+                    label: const Text('Save unfunded order request'),
+                  ),
+                  TextButton(
+                    onPressed: _busy ? null : () => Navigator.of(context).push<void>(
+                      MaterialPageRoute<void>(
+                        builder: (context) => OrderIntentsPage(api: widget.api),
+                      ),
+                    ),
+                    child: const Text('View existing requests'),
+                  ),
+                ],
+              ] else if (canPropose) ...[
                 TextField(
                   controller: _amount,
                   key: const Key('offer-amount'),
