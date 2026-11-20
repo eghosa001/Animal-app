@@ -1,6 +1,5 @@
 """Safe, row-locked pre-checkout records; no inventory, payment or custody effect."""
 from django.db import transaction
-from django.db.models import Q
 from django.utils import timezone
 from rest_framework.exceptions import PermissionDenied, ValidationError
 
