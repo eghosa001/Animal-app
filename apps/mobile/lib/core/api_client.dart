@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'listing_models.dart';
 import 'chat_models.dart';
 import 'offer_models.dart';
+import 'order_intent_models.dart';
 import 'video_feed_models.dart';
 
 import 'package:http_parser/http_parser.dart';
@@ -771,6 +772,62 @@ class ApiClient {
       {'decision': decision},
     );
     return AnimalOfferQuote.fromJson(data);
+  }
+
+  /// A private receipt, not a payment attempt or inventory reservation.
+  Future<OrderIntentReceipt> createUnfundedOrderIntent(
+    String acceptedOfferId, {required String requestNonce}
+  ) async {
+    if (!RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(acceptedOfferId) ||
+        !RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(requestNonce)) {
+      throw const ApiFailure('Invalid accepted price agreement');
+    }
+    final data = await _authorizedChatPost(
+      '/api/v1/orders/intents/',
+      {
+        'accepted_offer_id': acceptedOfferId,
+        'request_nonce': requestNonce,
+        'no_payment_acknowledged': true,
+      },
+    );
+    return OrderIntentReceipt.fromJson(data);
+  }
+
+  Future<List<OrderIntentReceipt>> getMyOrderIntents() async {
+    final all = <OrderIntentReceipt>[];
+    for (var page = 1; page <= 100; page++) {
+      final response = await _authorizedGet(
+        '/api/v1/orders/intents/?page=$page',
+      );
+      final data = _decode(response);
+      final raw = data['results'];
+      if (raw is! List) {
+        throw const ApiFailure('Unexpected checkout-request response');
+      }
+      try {
+        all.addAll(raw.map((row) =>
+            OrderIntentReceipt.fromJson(row as Map<String, dynamic>)));
+      } on TypeError {
+        throw const ApiFailure('Unexpected checkout-request response');
+      }
+      if (data['next'] == null) { return all; }
+    }
+    throw const ApiFailure('Too many checkout requests to load');
+  }
+
+  /// Cancellation never attempts a refund because no funds were collected.
+  Future<OrderIntentReceipt> cancelUnfundedOrderIntent(
+    String intentId, String reason,
+  ) async {
+    if (!RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(intentId) ||
+        reason.trim().length < 20 || reason.trim().length > 240) {
+      throw const ApiFailure('Explain the cancellation in 20–240 characters');
+    }
+    final data = await _authorizedChatPost(
+      '/api/v1/orders/intents/$intentId/cancel/',
+      {'reason': reason.trim()},
+    );
+    return OrderIntentReceipt.fromJson(data);
   }
 
   /// Public, paginated list of safety-reviewed videos.
