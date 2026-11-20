@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import 'core/api_client.dart';
 import 'blocked_accounts_page.dart';
+import 'order_intents_page.dart';
 import 'chat_inbox_page.dart';
 import 'create_hub_page.dart';
 import 'password_recovery_page.dart';
@@ -474,6 +475,15 @@ class _AccountPageState extends State<AccountPage> {
               label: const Text('Upload animal photos or verification'),
             ),
           ],
+          OutlinedButton.icon(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (context) => OrderIntentsPage(api: widget.api),
+              ),
+            ),
+            icon: const Icon(Icons.receipt_long_outlined),
+            label: const Text('My order requests'),
+          ),
           OutlinedButton.icon(
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
