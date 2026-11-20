@@ -830,6 +830,19 @@ class ApiClient {
     return OrderIntentReceipt.fromJson(data);
   }
 
+  /// Mark only an actually loaded message, never an arbitrary timestamp.
+  Future<void> markConversationRead(
+      String conversationId, String messageId) async {
+    if (!RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(conversationId) ||
+        !RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(messageId)) {
+      throw const ApiFailure('Invalid message to mark as read');
+    }
+    await _authorizedChatPost(
+      '/api/v1/chats/conversations/$conversationId/read/',
+      {'message_id': messageId},
+    );
+  }
+
   /// Public, paginated list of safety-reviewed videos.
   Future<AnimalVideoPage> getVideoFeed({int page = 1}) async {
     if (page < 1) throw const ApiFailure('Invalid video page');

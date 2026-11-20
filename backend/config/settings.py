@@ -101,6 +101,7 @@ REST_FRAMEWORK = {
         "auth_logout_all": "5/hour",
         "chat_start": "15/hour",
         "chat_send": "30/minute",
+        "chat_read": "60/minute",
         "safety_block": "30/hour",
         "safety_report": "10/hour",
         "offer_create": "12/hour",

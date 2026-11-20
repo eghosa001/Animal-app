@@ -19,6 +19,14 @@ class Conversation(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT,
         related_name="seller_conversations",
     )
+    buyer_last_read_message = models.ForeignKey(
+        "chats.ChatMessage", null=True, blank=True, on_delete=models.PROTECT,
+        related_name="buyer_read_by_conversations",
+    )
+    seller_last_read_message = models.ForeignKey(
+        "chats.ChatMessage", null=True, blank=True, on_delete=models.PROTECT,
+        related_name="seller_read_by_conversations",
+    )
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(default=timezone.now)
 

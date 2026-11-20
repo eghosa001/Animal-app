@@ -35,12 +35,13 @@ class ConversationReadSerializer(serializers.ModelSerializer):
     counterparty_id = serializers.SerializerMethodField()
     buyer_id = serializers.UUIDField(read_only=True)
     can_send = serializers.SerializerMethodField()
+    unread_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Conversation
         fields = (
             "id", "listing", "listing_title", "counterparty_name", "counterparty_id", "buyer_id",
-            "can_send", "created_at", "updated_at",
+            "can_send", "unread_count", "created_at", "updated_at",
         )
         read_only_fields = fields
 
@@ -57,6 +58,21 @@ class ConversationReadSerializer(serializers.ModelSerializer):
 
     def get_can_send(self, obj):
         return chat_is_writable(obj)
+
+    def get_unread_count(self, obj):
+        """Counts only the other participant's messages after this user's cursor."""
+        user = self.context["request"].user
+        last = (
+            obj.buyer_last_read_message if user.pk == obj.buyer_id
+            else obj.seller_last_read_message
+        )
+        unread = ChatMessage.objects.filter(conversation=obj).exclude(sender=user)
+        if last is not None:
+            unread = unread.filter(
+                Q(created_at__gt=last.created_at)
+                | Q(created_at=last.created_at, pk__gt=last.pk)
+            )
+        return unread.count()
 
 
 class ConversationStartSerializer(serializers.Serializer):
@@ -80,3 +96,7 @@ class ChatMessageCreateSerializer(serializers.Serializer):
         if not value.strip():
             raise serializers.ValidationError("Message cannot be blank")
         return value
+
+
+class ChatReadAcknowledgeSerializer(serializers.Serializer):
+    message_id = serializers.UUIDField()

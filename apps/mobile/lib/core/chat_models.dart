@@ -7,6 +7,7 @@ class ChatConversation {
     required this.counterpartyName,
     this.counterpartyId = '',
     this.buyerId = '',
+    this.unreadCount = 0,
     required this.canSend,
     required this.updatedAt,
   });
@@ -18,6 +19,7 @@ class ChatConversation {
   final String counterpartyId;
   final String buyerId;
   final bool canSend;
+  final int unreadCount;
   final DateTime? updatedAt;
 
   factory ChatConversation.fromJson(Map<String, dynamic> data) {
@@ -29,6 +31,7 @@ class ChatConversation {
       counterpartyId: data['counterparty_id']?.toString() ?? '',
       buyerId: data['buyer_id']?.toString() ?? '',
       canSend: data['can_send'] == true,
+      unreadCount: (data['unread_count'] as num?)?.toInt() ?? 0,
       updatedAt: DateTime.tryParse(data['updated_at']?.toString() ?? ''),
     );
   }
