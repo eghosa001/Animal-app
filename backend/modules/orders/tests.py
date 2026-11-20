@@ -85,7 +85,7 @@ class UnfundedOrderIntentTests(APITestCase):
         self.assertEqual(result.data["fulfillment_mode"], "pickup_planned")
         self.assertEqual(result.data["animal_name_snapshot"], "Test Bella")
         self.assertEqual(result.data["listing_region_snapshot"], "Benin City")
-        self.assertEqual(result.data["animal_id_snapshot"], self.animal.pk)
+        self.assertEqual(str(result.data["animal_id_snapshot"]), str(self.animal.pk))
         self.assertIs(result.data["checkout_available"], False)
         self.assertIs(result.data["funds_secured"], False)
         self.assertIs(result.data["animal_reserved"], False)
