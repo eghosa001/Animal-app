@@ -8,7 +8,7 @@ from channels.testing import WebsocketCommunicator
 from django.core import signing
 from django.core.cache import cache
 from django.utils import timezone
-from rest_framework.test import APITestCase
+from rest_framework.test import APITransactionTestCase
 
 from config.asgi import application
 from modules.accounts.models import SellerProfile, User
@@ -19,7 +19,7 @@ from .models import ChatMessage, Conversation
 from .realtime import chat_group_name, create_socket_ticket, validate_socket_ticket
 
 
-class ConversationRealtimeTests(APITestCase):
+class ConversationRealtimeTests(APITransactionTestCase):
     def setUp(self):
         cache.clear()
         self.buyer = User.objects.create_user(
@@ -155,18 +155,16 @@ class ConversationRealtimeTests(APITestCase):
         )
         nonce = str(uuid.uuid4())
         with patch("modules.chats.views.send_message_notice") as publish:
-            with self.captureOnCommitCallbacks(execute=True):
-                first = self.client.post(endpoint, {
-                    "body": "Is the animal ready for a safe visit?",
-                    "client_nonce": nonce,
-                }, format="json")
+            first = self.client.post(endpoint, {
+                "body": "Is the animal ready for a safe visit?",
+                "client_nonce": nonce,
+            }, format="json")
             self.assertEqual(first.status_code, 201)
             publish.assert_called_once()
-            with self.captureOnCommitCallbacks(execute=True):
-                repeat = self.client.post(endpoint, {
-                    "body": "Is the animal ready for a safe visit?",
-                    "client_nonce": nonce,
-                }, format="json")
+            repeat = self.client.post(endpoint, {
+                "body": "Is the animal ready for a safe visit?",
+                "client_nonce": nonce,
+            }, format="json")
             self.assertEqual(repeat.status_code, 200)
             publish.assert_called_once()
         self.assertEqual(ChatMessage.objects.count(), 1)
