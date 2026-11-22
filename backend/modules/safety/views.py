@@ -11,7 +11,8 @@ from rest_framework.views import APIView
 from modules.accounts.models import SellerProfile, User
 from modules.chats.models import ChatMessage
 from modules.listings.models import Listing
-from modules.social.models import VideoPost
+from modules.social.models import VideoComment, VideoPost
+from modules.social.comments import visible_video
 
 from .models import SafetyReport, UserBlock
 from .serializers import (
@@ -93,6 +94,21 @@ class ReportsView(WriteRateMixin, generics.ListCreateAPIView):
                 ), pk=object_id,
             )
             kwargs["video"] = video
+        elif target == "comment":
+            comment = get_object_or_404(
+                VideoComment.objects.filter(
+                    status=VideoComment.Status.APPROVED,
+                    author__is_active=True,
+                ), pk=object_id,
+            )
+            visible_video(comment.video_id, request.user)
+            if UserBlock.objects.filter(
+                Q(blocker=request.user, blocked_id=comment.author_id)
+                | Q(blocker_id=comment.author_id, blocked=request.user)
+            ).exists():
+                from rest_framework.exceptions import NotFound
+                raise NotFound("Comment unavailable")
+            kwargs["comment"] = comment
         elif target == "listing":
             listing = get_object_or_404(
                 Listing.objects.filter(
