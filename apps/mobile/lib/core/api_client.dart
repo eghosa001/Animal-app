@@ -698,7 +698,7 @@ class ApiClient {
     required String category,
     required String detail,
   }) async {
-    if (!const {'video', 'listing', 'message', 'user'}.contains(targetType) ||
+    if (!const {'video', 'listing', 'message', 'comment', 'user'}.contains(targetType) ||
         !RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(targetId) ||
         !const {'scam', 'harassment', 'welfare', 'illegal_trade',
                 'copyright', 'other'}.contains(category) ||
