@@ -5,7 +5,7 @@ from rest_framework import serializers
 from modules.accounts.models import SellerProfile
 from modules.listings.models import Listing
 
-from .models import VideoPost
+from .models import VideoComment, VideoPost
 
 
 class VideoPostSerializer(serializers.ModelSerializer):
@@ -15,15 +15,19 @@ class VideoPostSerializer(serializers.ModelSerializer):
     poster_url = serializers.SerializerMethodField()
     listing = serializers.SerializerMethodField()
     likes_count = serializers.SerializerMethodField()
+    comments_count = serializers.SerializerMethodField()
     is_liked = serializers.SerializerMethodField()
 
     class Meta:
         model = VideoPost
-        fields = ("id", "creator_id", "creator_name", "caption", "playback_url", "poster_url", "listing", "likes_count", "is_liked", "created_at")
+        fields = ("id", "creator_id", "creator_name", "caption", "playback_url", "poster_url", "listing", "likes_count", "comments_count", "is_liked", "created_at")
         read_only_fields = fields
 
     def get_likes_count(self, obj):
         return getattr(obj, "active_likes_count", 0)
+
+    def get_comments_count(self, obj):
+        return getattr(obj, "approved_comments_count", 0)
 
     def get_is_liked(self, obj):
         return bool(getattr(obj, "viewer_has_liked", False))
@@ -56,3 +60,23 @@ class VideoPostSerializer(serializers.ModelSerializer):
             "currency": listing.currency,
             "region": listing.region,
         }
+
+
+class VideoCommentCreateSerializer(serializers.Serializer):
+    body = serializers.CharField(min_length=3, max_length=500, trim_whitespace=True)
+    client_nonce = serializers.UUIDField()
+
+    def validate_body(self, body):
+        if not any(char.isalnum() for char in body):
+            raise serializers.ValidationError("Write a meaningful comment")
+        return body
+
+
+class VideoCommentSerializer(serializers.ModelSerializer):
+    author_name = serializers.CharField(source="author.display_name", read_only=True)
+    author_id = serializers.UUIDField(read_only=True)
+
+    class Meta:
+        model = VideoComment
+        fields = ("id", "author_id", "author_name", "body", "created_at")
+        read_only_fields = fields
