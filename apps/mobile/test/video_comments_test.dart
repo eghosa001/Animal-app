@@ -84,6 +84,7 @@ void main() {
     )));
     await tester.pumpAndSettle();
     expect(find.text('The dog looks very happy'), findsOneWidget);
+    expect(find.byTooltip('Report comment'), findsOneWidget);
     expect(find.text('Gentle animal enrichment'), findsNothing);
     await tester.enterText(
       find.byKey(const Key('video-comment-input')),
