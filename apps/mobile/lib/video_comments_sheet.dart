@@ -144,7 +144,7 @@ class _VideoCommentsSheetState extends State<VideoCommentsSheet> {
       child: Padding(
         padding: EdgeInsets.fromLTRB(16, 12, 16, bottom + 12),
         child: SizedBox(
-          height: MediaQuery.sizeOf(context).height * 0.67,
+          height: (MediaQuery.sizeOf(context).height - bottom) * 0.67,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -161,7 +161,7 @@ class _VideoCommentsSheetState extends State<VideoCommentsSheet> {
               const Text('Comments are checked before anyone can see them.',
                 style: TextStyle(fontSize: 12)),
               const SizedBox(height: 8),
-              if (_pending case final receipt?) Card(
+              if (_pending != null) Card(
                 key: const Key('pending-video-comment'),
                 child: ListTile(
                   title: const Text('Awaiting moderation'),
