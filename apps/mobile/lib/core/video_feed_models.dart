@@ -8,6 +8,8 @@ class AnimalVideoPost {
     required this.playbackUrl,
     required this.posterUrl,
     this.listing,
+    this.likesCount = 0,
+    this.isLiked = false,
   });
 
   final String id;
@@ -17,6 +19,18 @@ class AnimalVideoPost {
   final String playbackUrl;
   final String posterUrl;
   final VideoListingLink? listing;
+  final int likesCount;
+  final bool isLiked;
+
+  AnimalVideoPost copyWith({int? likesCount, bool? isLiked}) {
+    return AnimalVideoPost(
+      id: id, creatorName: creatorName, creatorId: creatorId,
+      caption: caption, playbackUrl: playbackUrl, posterUrl: posterUrl,
+      listing: listing,
+      likesCount: likesCount ?? this.likesCount,
+      isLiked: isLiked ?? this.isLiked,
+    );
+  }
 
   factory AnimalVideoPost.fromJson(Map<String, dynamic> json) {
     final playback = Uri.tryParse(json['playback_url']?.toString() ?? '');
@@ -28,6 +42,8 @@ class AnimalVideoPost {
       id: json['id']?.toString() ?? '',
       creatorName: json['creator_name']?.toString() ?? 'Animal creator',
       creatorId: json['creator_id']?.toString() ?? '',
+      likesCount: (json['likes_count'] as num?)?.toInt() ?? 0,
+      isLiked: json['is_liked'] == true,
       caption: json['caption']?.toString() ?? '',
       playbackUrl: playback.toString(),
       posterUrl: json['poster_url']?.toString() ?? '',
@@ -69,4 +85,21 @@ class AnimalVideoPage {
   const AnimalVideoPage({required this.posts, required this.hasMore});
   final List<AnimalVideoPost> posts;
   final bool hasMore;
+}
+
+class VideoLikeResult {
+  const VideoLikeResult({required this.likesCount, required this.isLiked});
+  final int likesCount;
+  final bool isLiked;
+
+  factory VideoLikeResult.fromJson(Map<String, dynamic> data) {
+    final count = data['likes_count'];
+    if (count is! int || count < 0 || data['is_liked'] is! bool) {
+      throw const FormatException('Unexpected video reaction response');
+    }
+    return VideoLikeResult(
+      likesCount: count,
+      isLiked: data['is_liked'] as bool,
+    );
+  }
 }
