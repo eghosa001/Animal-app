@@ -69,6 +69,14 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
         _hasMore = result.hasMore;
         _page = page + 1;
       });
+      if (reset && result.messages.isNotEmpty) {
+        final lastDisplayedMessageId = result.messages.first.id;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            unawaited(_ackDisplayedMessage(lastDisplayedMessageId));
+          }
+        });
+      }
     } on ApiFailure catch (error) {
       if (mounted) { setState(() => _error = error.message); }
     } catch (_) {
@@ -81,6 +89,17 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
           _older = false;
         });
       }
+    }
+  }
+
+  Future<void> _ackDisplayedMessage(String messageId) async {
+    try {
+      await widget.api.markConversationRead(
+        widget.conversation.id, messageId,
+      );
+    } catch (_) {
+      // Offline/rejected acknowledgement leaves unread state unchanged.
+      // A later conversation refresh will retry with a real displayed ID.
     }
   }
 

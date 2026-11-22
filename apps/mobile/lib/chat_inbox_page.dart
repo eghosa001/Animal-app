@@ -131,7 +131,20 @@ class _ChatInboxPageState extends State<ChatInboxPage> {
                 title: Text(item.counterpartyName),
                 subtitle: Text(item.listingTitle, maxLines: 1,
                     overflow: TextOverflow.ellipsis),
-                trailing: const Icon(Icons.chevron_right),
+                trailing: item.unreadCount > 0
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Badge(
+                            label: Text(item.unreadCount > 99
+                                ? '99+' : '${item.unreadCount}'),
+                            child: const Icon(Icons.mark_chat_unread_outlined),
+                          ),
+                          const SizedBox(width: 12),
+                          const Icon(Icons.chevron_right),
+                        ],
+                      )
+                    : const Icon(Icons.chevron_right),
                 onTap: () => _open(item),
               );
             },

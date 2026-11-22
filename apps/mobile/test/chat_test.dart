@@ -23,13 +23,24 @@ class FakeChatApi extends ApiClient {
   String? submittedNonce;
   int starts = 0;
   bool requireLogin = false;
+  int unreadCount = 0;
+  int readCalls = 0;
+  String? lastReadMessageId;
 
   @override
   Future<List<ChatConversation>> getMyConversations() async {
     if (requireLogin) {
       throw const ApiFailure('Sign in to message animal sellers');
     }
-    return [testConversation];
+    return [ChatConversation(
+      id: testConversation.id,
+      listingId: testConversation.listingId,
+      listingTitle: testConversation.listingTitle,
+      counterpartyName: testConversation.counterpartyName,
+      canSend: testConversation.canSend,
+      updatedAt: testConversation.updatedAt,
+      unreadCount: unreadCount,
+    )];
   }
 
   @override
@@ -68,6 +79,15 @@ class FakeChatApi extends ApiClient {
     );
     messages.add(created);
     return created;
+  }
+
+  @override
+  Future<void> markConversationRead(
+      String conversationId, String messageId) async {
+    expect(conversationId, testConversationId);
+    readCalls++;
+    lastReadMessageId = messageId;
+    unreadCount = 0;
   }
 
   @override
@@ -132,6 +152,33 @@ void main() {
     expect(api.submittedText, 'Is the animal available for a visit?');
     expect(api.submittedNonce, isNotNull);
     expect(find.text('Is the animal available for a visit?'), findsOneWidget);
+    api.dispose();
+  });
+
+  testWidgets('inbox unread badge clears only after viewing a message',
+      (tester) async {
+    final api = FakeChatApi()..unreadCount = 3;
+    api.messages.add(const ChatMessage(
+      id: '00000000-0000-0000-0000-000000000099',
+      senderId: testListingId,
+      senderName: 'Approved breeder',
+      body: 'Please confirm the animal and planned safe visit.',
+      createdAt: null,
+      clientNonce: '00000000-0000-0000-0000-000000000088',
+    ));
+    await tester.pumpWidget(MaterialApp(home: Scaffold(
+      body: ChatInboxPage(api: api, openAccount: () {}),
+    )));
+    await tester.pumpAndSettle();
+    expect(find.text('3'), findsOneWidget);
+    expect(api.readCalls, 0);
+    await tester.tap(find.text('Approved breeder'));
+    await tester.pumpAndSettle();
+    expect(api.lastReadMessageId, api.messages.first.id);
+    expect(api.readCalls, 1);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.text('3'), findsNothing);
     api.dispose();
   });
 

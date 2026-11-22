@@ -14,8 +14,10 @@ from modules.listings.models import Listing
 from modules.safety.models import UserBlock
 
 from .models import ChatMessage, Conversation
+from .read_receipts import acknowledge_read_message
 from .serializers import (
     ChatMessageCreateSerializer, ChatMessageReadSerializer,
+    ChatReadAcknowledgeSerializer,
     ConversationReadSerializer, ConversationStartSerializer, chat_is_writable,
 )
 
@@ -42,6 +44,7 @@ class ConversationsView(ParticipantThrottleMixin, generics.ListCreateAPIView):
             ).select_related(
                 "buyer", "seller", "seller__seller_profile",
                 "listing", "listing__animal__species",
+                "buyer_last_read_message", "seller_last_read_message",
             ).order_by("-updated_at", "-id")
         )
 
@@ -136,3 +139,29 @@ class ConversationMessagesView(
             ChatMessageReadSerializer(msg).data,
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
         )
+
+
+class ConversationReadAcknowledgeView(generics.GenericAPIView):
+    """Only a participant may acknowledge a real message from this conversation."""
+
+    permission_classes = (IsAuthenticated,)
+    throttle_classes = (ScopedRateThrottle,)
+    throttle_scope = "chat_read"
+
+    def post(self, request, conversation_id):
+        conversation = get_object_or_404(
+            Conversation.objects.filter(
+                Q(buyer=request.user) | Q(seller=request.user)
+            ), pk=conversation_id,
+        )
+        form = ChatReadAcknowledgeSerializer(data=request.data)
+        form.is_valid(raise_exception=True)
+        message = get_object_or_404(
+            ChatMessage, conversation=conversation,
+            pk=form.validated_data["message_id"],
+        )
+        acknowledged = acknowledge_read_message(
+            conversation_id=conversation.pk, actor=request.user,
+            message_id=message.pk,
+        )
+        return Response({"last_read_message": str(acknowledged.pk)})
