@@ -90,6 +90,7 @@ void main() {
       find.byKey(const Key('video-comment-input')),
       'Gentle animal enrichment',
     );
+    await tester.pump();
     await tester.tap(find.byTooltip('Submit comment for review'));
     await tester.pumpAndSettle();
     expect(api.posts, 1);
@@ -116,6 +117,7 @@ void main() {
       find.byKey(const Key('video-comment-input')),
       'Gentle animal enrichment',
     );
+    await tester.pump();
     await tester.tap(find.byTooltip('Submit comment for review'));
     await tester.pumpAndSettle();
     expect(api.posts, 1);
