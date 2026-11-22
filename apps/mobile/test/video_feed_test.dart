@@ -60,6 +60,22 @@ void main() {
     api.dispose();
   });
 
+  test('signed-in feed sends identity for block and own-reaction privacy', () async {
+    FlutterSecureStorage.setMockInitialValues({'anima_access': 'sample-test-token'});
+    final api = ApiClient(
+      baseUrl: 'https://api.example.invalid',
+      client: MockClient((request) async {
+        expect(request.headers['Authorization'], 'Bearer sample-test-token');
+        return http.Response(jsonEncode({
+          'count': 1, 'next': null, 'results': [clip],
+        }), 200);
+      }),
+    );
+    final page = await api.getVideoFeed();
+    expect(page.posts.length, 1);
+    api.dispose();
+  });
+
   test('the video endpoint rejects broken response contracts', () async {
     final api = ApiClient(
       baseUrl: 'https://api.example.invalid',
