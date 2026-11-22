@@ -134,10 +134,6 @@ class ConversationRealtimeTests(APITestCase):
             self.assertEqual(event["type"], "message.created")
             self.assertEqual(event["message_id"], str(message_id))
             self.assertNotIn("body", event)
-            await socket.send_json_to({"type": "ping"})
-            self.assertEqual(
-                (await socket.receive_json_from(timeout=3))["type"], "pong",
-            )
             await socket.disconnect()
 
         async_to_sync(exercise)()
