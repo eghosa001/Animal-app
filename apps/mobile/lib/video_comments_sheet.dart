@@ -116,10 +116,12 @@ class _VideoCommentsSheetState extends State<VideoCommentsSheet> {
     setState(() => _sending = true);
     try {
       await widget.api.deleteVideoComment(widget.videoId, receipt.id);
-      if (mounted) setState(() {
-        _pending = null;
-        _pendingBody = null;
-      });
+      if (mounted) {
+        setState(() {
+          _pending = null;
+          _pendingBody = null;
+        });
+      }
     } on ApiFailure catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
