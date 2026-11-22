@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:anima_app/chat_inbox_page.dart';
 import 'package:anima_app/core/api_client.dart';
 import 'package:anima_app/core/chat_models.dart';
@@ -23,6 +25,7 @@ class FakeChatApi extends ApiClient {
   String? submittedNonce;
   int starts = 0;
   bool requireLogin = false;
+  int socketAttempts = 0;
   int unreadCount = 0;
   int readCalls = 0;
   String? lastReadMessageId;
@@ -88,6 +91,13 @@ class FakeChatApi extends ApiClient {
     readCalls++;
     lastReadMessageId = messageId;
     unreadCount = 0;
+  }
+
+  @override
+  Future<WebSocket?> connectConversationUpdates(String conversationId) async {
+    expect(conversationId, testConversationId);
+    socketAttempts++;
+    return null;
   }
 
   @override
