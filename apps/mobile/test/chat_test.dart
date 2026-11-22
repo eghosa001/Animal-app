@@ -1,6 +1,9 @@
 import 'dart:io';
+import 'dart:async';
+import 'dart:convert';
 
 import 'package:anima_app/chat_inbox_page.dart';
+import 'package:anima_app/chat_thread_page.dart';
 import 'package:anima_app/core/api_client.dart';
 import 'package:anima_app/core/chat_models.dart';
 import 'package:anima_app/listing_detail_page.dart';
@@ -26,6 +29,8 @@ class FakeChatApi extends ApiClient {
   int starts = 0;
   bool requireLogin = false;
   int socketAttempts = 0;
+  int messageReads = 0;
+  WebSocket? fakeSocket;
   int unreadCount = 0;
   int readCalls = 0;
   String? lastReadMessageId;
@@ -58,6 +63,7 @@ class FakeChatApi extends ApiClient {
     String conversationId, {int page = 1}
   ) async {
     expect(conversationId, testConversationId);
+    messageReads++;
     return ChatMessagePage(
       messages: messages.reversed.toList(),
       hasMore: false,
@@ -97,7 +103,7 @@ class FakeChatApi extends ApiClient {
   Future<WebSocket?> connectConversationUpdates(String conversationId) async {
     expect(conversationId, testConversationId);
     socketAttempts++;
-    return null;
+    return fakeSocket;
   }
 
   @override
@@ -115,6 +121,32 @@ class FakeChatApi extends ApiClient {
       photoUrls: [],
     );
   }
+}
+
+class FakeRealtimeSocket extends Stream<dynamic> implements WebSocket {
+  final _events = StreamController<dynamic>.broadcast();
+
+  void emitNotice(String conversationId, String messageId) {
+    _events.add(jsonEncode({
+      'type': 'message.created',
+      'conversation_id': conversationId,
+      'message_id': messageId,
+    }));
+  }
+
+  @override
+  StreamSubscription<dynamic> listen(
+      void Function(dynamic event)? onData,
+      {Function? onError, void Function()? onDone, bool? cancelOnError}) {
+    return _events.stream.listen(onData,
+      onError: onError, onDone: onDone, cancelOnError: cancelOnError);
+  }
+
+  @override
+  Future<dynamic> close([int? code, String? reason]) => _events.close();
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 void main() {
@@ -189,6 +221,35 @@ void main() {
     await tester.pageBack();
     await tester.pumpAndSettle();
     expect(find.text('3'), findsNothing);
+    api.dispose();
+  });
+
+  testWidgets('authenticated socket hint refreshes REST messages; unrelated hints ignored',
+      (tester) async {
+    final socket = FakeRealtimeSocket();
+    final api = FakeChatApi()..fakeSocket = socket;
+    await tester.pumpWidget(MaterialApp(
+      home: ChatThreadPage(api: api, conversation: testConversation),
+    ));
+    await tester.pumpAndSettle();
+    expect(api.socketAttempts, 1);
+    expect(api.messageReads, 1);
+    final id = '00000000-0000-0000-0000-000000000071';
+    api.messages.add(ChatMessage(
+      id: id, senderId: testListingId, senderName: 'Approved breeder',
+      body: 'Safe animal handover planning is available in chat.',
+      createdAt: null, clientNonce: ApiClient.newChatNonce(),
+    ));
+    socket.emitNotice('00000000-0000-0000-0000-000000000099', id);
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(api.messageReads, 1);
+    socket.emitNotice(testConversationId, id);
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pumpAndSettle();
+    expect(api.messageReads, 2);
+    expect(find.text('Safe animal handover planning is available in chat.'),
+        findsOneWidget);
+    await tester.pumpWidget(const MaterialApp(home: Scaffold()));
     api.dispose();
   });
 
