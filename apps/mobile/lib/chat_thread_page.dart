@@ -82,8 +82,8 @@ class _ChatThreadPageState extends State<ChatThreadPage> with WidgetsBindingObse
         } catch (_) {
           // Ignore malformed remote notices; never execute server-provided code.
         }
-      }, onDone: _socketDisconnected, onError: (_) {
-        _socketDisconnected();
+      }, onDone: () => _socketDisconnected(socket), onError: (_) {
+        _socketDisconnected(socket);
       }, cancelOnError: true);
     } catch (_) {
       _retrySocket();
@@ -104,7 +104,8 @@ class _ChatThreadPageState extends State<ChatThreadPage> with WidgetsBindingObse
     });
   }
 
-  void _socketDisconnected() {
+  void _socketDisconnected(WebSocket disconnectedSocket) {
+    if (!identical(_socket, disconnectedSocket)) { return; }
     _socket = null;
     _socketEvents = null;
     _retrySocket();
