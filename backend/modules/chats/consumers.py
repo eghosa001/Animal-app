@@ -41,10 +41,8 @@ class ConversationUpdateConsumer(AsyncJsonWebsocketConsumer):
         await self.close(code=4401)
 
     async def receive_json(self, content, **kwargs):
-        # No chat body ever travels from an unthrottled socket.
-        if isinstance(content, dict) and content.get("type") == "ping":
-            await self.send_json({"type": "pong"})
-            return
+        # Native WebSocket ping/pong is handled by the ASGI protocol server.
+        # Do not expose an unthrottled application-level request path.
         await self.close(code=4400)
 
     async def chat_update(self, event):
