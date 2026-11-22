@@ -134,6 +134,16 @@ class _VideoFeedPageState extends State<VideoFeedPage> {
             api: widget.api,
             active: index == _active,
             onBlocked: () => unawaited(_loadPage(reset: true)),
+            onReactionChanged: (count, liked) {
+              final i = _posts.indexWhere((item) => item.id == post.id);
+              if (i >= 0 && mounted) {
+                setState(() {
+                  _posts[i] = _posts[i].copyWith(
+                    likesCount: count, isLiked: liked,
+                  );
+                });
+              }
+            },
             openListing: widget.openListing,
           );
         },
@@ -191,6 +201,7 @@ class _AnimalVideoTile extends StatefulWidget {
     required this.post,
     required this.api,
     required this.onBlocked,
+    required this.onReactionChanged,
     required this.active,
     required this.openListing,
     super.key,
@@ -198,6 +209,7 @@ class _AnimalVideoTile extends StatefulWidget {
   final AnimalVideoPost post;
   final ApiClient api;
   final VoidCallback onBlocked;
+  final void Function(int count, bool liked) onReactionChanged;
   final bool active;
   final Future<void> Function(String) openListing;
 
@@ -211,11 +223,16 @@ class _AnimalVideoTileState extends State<_AnimalVideoTile>
   bool _muted = false;
   bool _ready = false;
   bool _failed = false;
+  bool _liking = false;
+  late int _likesCount;
+  late bool _liked;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _likesCount = widget.post.likesCount;
+    _liked = widget.post.isLiked;
     if (widget.active) unawaited(_start());
   }
 
@@ -248,6 +265,10 @@ class _AnimalVideoTileState extends State<_AnimalVideoTile>
   @override
   void didUpdateWidget(covariant _AnimalVideoTile oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (!_liking) {
+      _likesCount = widget.post.likesCount;
+      _liked = widget.post.isLiked;
+    }
     if (oldWidget.post.id != widget.post.id || !widget.active) {
       _release();
     }
@@ -295,6 +316,35 @@ class _AnimalVideoTileState extends State<_AnimalVideoTile>
         await controller?.play();
         if (mounted) setState(() {});
       }
+    }
+  }
+
+  Future<void> _toggleLike() async {
+    if (_liking) { return; }
+    final requested = !_liked;
+    setState(() { _liking = true; });
+    try {
+      final result = await widget.api.setVideoLiked(widget.post.id, requested);
+      if (!mounted) { return; }
+      setState(() {
+        _likesCount = result.likesCount;
+        _liked = result.isLiked;
+      });
+      widget.onReactionChanged(result.likesCount, result.isLiked);
+    } on ApiFailure catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.message)),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not update video like. Try again.')),
+        );
+      }
+    } finally {
+      if (mounted) { setState(() { _liking = false; }); }
     }
   }
 
@@ -389,6 +439,22 @@ class _AnimalVideoTileState extends State<_AnimalVideoTile>
                   color: Colors.white,
                   iconSize: 30,
                   icon: Icon(_muted ? Icons.volume_off : Icons.volume_up),
+                ),
+                const SizedBox(height: 12),
+                IconButton(
+                  key: const Key('video-like'),
+                  tooltip: _liked ? 'Unlike video' : 'Like video',
+                  onPressed: _liking ? null : () => unawaited(_toggleLike()),
+                  color: _liked ? Colors.redAccent : Colors.white,
+                  iconSize: 34,
+                  icon: Icon(_liked ? Icons.favorite : Icons.favorite_border),
+                ),
+                Text(
+                  _likesCount > 9999 ? '${(_likesCount / 1000).toStringAsFixed(1)}k'
+                      : '$_likesCount',
+                  style: const TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 IconButton(
