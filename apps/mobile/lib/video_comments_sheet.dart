@@ -56,9 +56,9 @@ class _VideoCommentsSheetState extends State<VideoCommentsSheet> {
         _error = null;
       });
     } on ApiFailure catch (error) {
-      if (mounted) setState(() => _error = error.message);
+      if (mounted) { setState(() => _error = error.message); }
     } catch (_) {
-      if (mounted) setState(() => _error = 'Comments could not be loaded.');
+      if (mounted) { setState(() => _error = 'Comments could not be loaded.'); }
     } finally {
       if (mounted) {
         setState(() {
@@ -104,7 +104,7 @@ class _VideoCommentsSheetState extends State<VideoCommentsSheet> {
         ));
       }
     } finally {
-      if (mounted) setState(() => _sending = false);
+      if (mounted) { setState(() => _sending = false); }
     }
   }
 
@@ -127,7 +127,7 @@ class _VideoCommentsSheetState extends State<VideoCommentsSheet> {
         );
       }
     } finally {
-      if (mounted) setState(() => _sending = false);
+      if (mounted) { setState(() => _sending = false); }
     }
   }
 
