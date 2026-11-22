@@ -39,7 +39,12 @@ class PublicVideoFeedView(ListAPIView):
         )
         queryset = queryset.annotate(
             active_likes_count=Count(
-                "likes", filter=Q(likes__user__is_active=True),
+                "likes", filter=Q(likes__user__is_active=True), distinct=True,
+            ),
+            approved_comments_count=Count(
+                "comments", filter=Q(
+                    comments__status="approved", comments__author__is_active=True,
+                ), distinct=True,
             )
         )
         if self.request.user.is_authenticated:
