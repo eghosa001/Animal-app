@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import PublicVideoFeedView
+from .views import PublicVideoFeedView, VideoLikeView
 from .upload_views import (
     MyVideoPostsView, StreamWebhookView, VideoUploadCapabilitiesView,
     VideoUploadTicketView,
@@ -8,6 +8,7 @@ from .upload_views import (
 
 urlpatterns = [
     path("videos/", PublicVideoFeedView.as_view(), name="public-video-feed"),
+    path("videos/<uuid:video_id>/like/", VideoLikeView.as_view(), name="video-like"),
     path("videos/upload-ticket/", VideoUploadTicketView.as_view(), name="video-upload-ticket"),
     path("videos/upload-capabilities/", VideoUploadCapabilitiesView.as_view(), name="video-upload-capabilities"),
     path("videos/mine/", MyVideoPostsView.as_view(), name="my-video-posts"),
