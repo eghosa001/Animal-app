@@ -1,4 +1,5 @@
 """Read-only ASGI socket: authenticated hint stream, never a message-write path."""
+import asyncio
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
@@ -32,6 +33,12 @@ class ConversationUpdateConsumer(AsyncJsonWebsocketConsumer):
             return
         self.group_joined = True
         await self.accept(subprotocol="anima.chat.v1")
+        self.expiry_task = asyncio.create_task(self._close_when_session_expires())
+
+    async def _close_when_session_expires(self):
+        # A stolen short-lived ticket cannot maintain a long-lived socket.
+        await asyncio.sleep(14 * 60)
+        await self.close(code=4401)
 
     async def receive_json(self, content, **kwargs):
         # No chat body ever travels from an unthrottled socket.
@@ -43,7 +50,7 @@ class ConversationUpdateConsumer(AsyncJsonWebsocketConsumer):
     async def chat_update(self, event):
         # Recheck access and revocations before delivering each private notice.
         permitted = await database_sync_to_async(validate_socket_ticket)(
-            self.ticket, self.conversation_id
+            self.ticket, self.conversation_id, max_age=None
         )
         if permitted != self.user_id:
             await self.close(code=4403)
@@ -58,5 +65,8 @@ class ConversationUpdateConsumer(AsyncJsonWebsocketConsumer):
         })
 
     async def disconnect(self, close_code):
+        task = getattr(self, "expiry_task", None)
+        if task is not None:
+            task.cancel()
         if getattr(self, "group_joined", False):
             await self.channel_layer.group_discard(self.group, self.channel_name)
