@@ -2,11 +2,13 @@ import 'package:anima_app/core/api_client.dart';
 import 'package:anima_app/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 void main() {
   testWidgets('opens directly into a moderated video feed with five tabs', (tester) async {
+    FlutterSecureStorage.setMockInitialValues({});
     final api = ApiClient(
       baseUrl: 'https://api.example.invalid',
       client: MockClient((_) async => http.Response(
