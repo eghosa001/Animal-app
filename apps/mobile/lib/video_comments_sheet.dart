@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'core/api_client.dart';
 import 'core/video_feed_models.dart';
+import 'safety_actions.dart';
 
 /// Public comments are reviewed before publication. Never optimistically
 /// append unapproved submissions to the public comment list.
@@ -205,6 +206,14 @@ class _VideoCommentsSheetState extends State<VideoCommentsSheet> {
                                       title: Text(comment.authorName),
                                       subtitle: Text(comment.body),
                                       contentPadding: EdgeInsets.zero,
+                                      trailing: IconButton(
+                                        tooltip: 'Report comment',
+                                        icon: const Icon(Icons.flag_outlined),
+                                        onPressed: () => openSafetyReport(
+                                          context: context, api: widget.api,
+                                          targetType: 'comment', targetId: comment.id,
+                                        ),
+                                      ),
                                     );
                                   },
                                 ),
