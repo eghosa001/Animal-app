@@ -59,6 +59,10 @@ class SafetyReport(models.Model):
         "social.VideoPost", on_delete=models.PROTECT,
         null=True, blank=True, related_name="safety_reports",
     )
+    comment = models.ForeignKey(
+        "social.VideoComment", on_delete=models.PROTECT,
+        null=True, blank=True, related_name="safety_reports",
+    )
     listing = models.ForeignKey(
         "listings.Listing", on_delete=models.PROTECT,
         null=True, blank=True, related_name="safety_reports",
@@ -87,14 +91,11 @@ class SafetyReport(models.Model):
         constraints = [
             models.CheckConstraint(
                 condition=(
-                    models.Q(video__isnull=False, listing__isnull=True,
-                             message__isnull=True, subject_user__isnull=True)
-                    | models.Q(video__isnull=True, listing__isnull=False,
-                               message__isnull=True, subject_user__isnull=True)
-                    | models.Q(video__isnull=True, listing__isnull=True,
-                               message__isnull=False, subject_user__isnull=True)
-                    | models.Q(video__isnull=True, listing__isnull=True,
-                               message__isnull=True, subject_user__isnull=False)
+                    models.Q(video__isnull=False, listing__isnull=True, message__isnull=True, subject_user__isnull=True, comment__isnull=True)
+                    | models.Q(video__isnull=True, listing__isnull=False, message__isnull=True, subject_user__isnull=True, comment__isnull=True)
+                    | models.Q(video__isnull=True, listing__isnull=True, message__isnull=False, subject_user__isnull=True, comment__isnull=True)
+                    | models.Q(video__isnull=True, listing__isnull=True, message__isnull=True, subject_user__isnull=False, comment__isnull=True)
+                    | models.Q(video__isnull=True, listing__isnull=True, message__isnull=True, subject_user__isnull=True, comment__isnull=False)
                 ),
                 name="anima_safety_one_report_target",
             ),
