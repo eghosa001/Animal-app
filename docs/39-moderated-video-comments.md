@@ -9,7 +9,7 @@ Video comments are a controlled social feature, not a free-for-all public text w
 - Anonymous users cannot write; inactive or unverified users are denied; blocked relationships, removed videos and unreviewed videos do not expose or accept comment text.
 - A public feed aggregate is calculated from approved comments by active authors. Combining likes with comment counts must use distinct aggregation to avoid a SQL join fanout.
 - Comment text must be rendered as plain text (no rich HTML interpretation), and the mobile editor must clearly say comments require review.
-- Existing reports can report the parent video, including a comment ID in the explanation. **Dedicated comment-level reporting remains a follow-up safety gate before public launch**, along with appeal/retention automation and moderation staffing.
+- Approved individual comments can be reported directly by ID via `POST /api/v1/safety/reports/` with `target_type=comment`. Such reports use the existing private, MFA-only safety case queue. Pending, removed, blocked or hidden comment IDs cannot be reported through public discovery. Appeals/retention automation and moderation staffing remain release gates.
 
 ## Rollout and rollback
 
