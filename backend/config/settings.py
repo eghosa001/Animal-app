@@ -104,6 +104,7 @@ REST_FRAMEWORK = {
         "chat_read": "60/minute",
         "chat_socket_ticket": "20/minute",
         "video_reaction": "40/minute",
+        "video_comment": "10/hour",
         "safety_block": "30/hour",
         "safety_report": "10/hour",
         "offer_create": "12/hour",

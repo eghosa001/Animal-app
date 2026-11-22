@@ -19,7 +19,7 @@ class BlockCreateSerializer(serializers.Serializer):
 
 class ReportCreateSerializer(serializers.Serializer):
     target_type = serializers.ChoiceField(
-        choices=("video", "listing", "message", "user"),
+        choices=("video", "listing", "message", "comment", "user"),
     )
     target_id = serializers.UUIDField()
     category = serializers.ChoiceField(choices=SafetyReport.Category.choices)
@@ -37,7 +37,7 @@ class ReportReadSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_target_type(self, obj):
-        for field in ("video", "listing", "message", "subject_user"):
+        for field in ("video", "listing", "message", "comment", "subject_user"):
             if getattr(obj, f"{field}_id") is not None:
                 return "user" if field == "subject_user" else field
         return "unknown"

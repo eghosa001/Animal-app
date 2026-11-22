@@ -35,7 +35,7 @@ class SafetyReportAdmin(admin.ModelAdmin):
     search_fields = ("id", "reporter__email")
     readonly_fields = (
         "id", "reporter", "category", "detail", "status",
-        "video", "listing", "message", "subject_user", "created_at",
+        "video", "listing", "message", "comment", "subject_user", "created_at",
         "reviewed_at", "reviewed_by",
     )
 

@@ -6,6 +6,7 @@ import 'package:video_player/video_player.dart';
 import 'core/api_client.dart';
 import 'core/video_feed_models.dart';
 import 'safety_actions.dart';
+import 'video_comments_sheet.dart';
 
 /// Full-height vertical feed. The server supplies only reviewed/processed clips.
 class VideoFeedPage extends StatefulWidget {
@@ -348,6 +349,29 @@ class _AnimalVideoTileState extends State<_AnimalVideoTile>
     }
   }
 
+  Future<void> _openComments() async {
+    final controller = _controller;
+    if (controller != null && _ready) {
+      await controller.pause();
+    }
+    if (!mounted) return;
+    try {
+      await showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        showDragHandle: false,
+        builder: (context) => VideoCommentsSheet(
+          api: widget.api,
+          videoId: widget.post.id,
+        ),
+      );
+    } finally {
+      if (mounted && widget.active && _ready && controller == _controller) {
+        await controller?.play();
+      }
+    }
+  }
+
   Future<void> _reportClip() async {
     final controller = _controller;
     if (controller != null && _ready) {
@@ -452,6 +476,22 @@ class _AnimalVideoTileState extends State<_AnimalVideoTile>
                 Text(
                   _likesCount > 9999 ? '${(_likesCount / 1000).toStringAsFixed(1)}k'
                       : '$_likesCount',
+                  style: const TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                IconButton(
+                  tooltip: 'Comments',
+                  onPressed: () => unawaited(_openComments()),
+                  color: Colors.white,
+                  iconSize: 30,
+                  icon: const Icon(Icons.mode_comment_outlined),
+                ),
+                Text(
+                  widget.post.commentsCount > 9999
+                      ? '${(widget.post.commentsCount / 1000).toStringAsFixed(1)}k'
+                      : '${widget.post.commentsCount}',
                   style: const TextStyle(
                     color: Colors.white, fontWeight: FontWeight.w600,
                   ),

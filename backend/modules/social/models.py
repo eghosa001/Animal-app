@@ -105,3 +105,66 @@ class VideoLike(models.Model):
         indexes = [
             models.Index(fields=("user", "-created_at"), name="anima_video_likes_user_idx"),
         ]
+
+
+class VideoComment(models.Model):
+    """Untrusted user text remains private until an authorized staff review."""
+    class Status(models.TextChoices):
+        PENDING = "pending", "Awaiting review"
+        APPROVED = "approved", "Published"
+        REJECTED = "rejected", "Rejected"
+        REMOVED = "removed", "Removed"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    video = models.ForeignKey(VideoPost, on_delete=models.PROTECT, related_name="comments")
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT,
+        related_name="animal_video_comments",
+    )
+    client_nonce = models.UUIDField()
+    body = models.CharField(max_length=500)
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.PENDING)
+    created_at = models.DateTimeField(default=timezone.now)
+    moderated_at = models.DateTimeField(null=True, blank=True)
+    moderated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT,
+        related_name="reviewed_video_comments",
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("author", "client_nonce"), name="anima_video_comment_nonce_unique",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=("video", "status", "-created_at"),
+                name="anima_video_comments_feed_idx",
+            ),
+        ]
+        permissions = (("review_videocomment", "Can moderate animal video comments"),)
+
+
+class VideoCommentReviewEvent(models.Model):
+    """Append-only record of manual comment publication or removal."""
+    class Decision(models.TextChoices):
+        APPROVE = "approve", "Approve"
+        REJECT = "reject", "Reject"
+        REMOVE = "remove", "Remove"
+
+    comment = models.ForeignKey(
+        VideoComment, on_delete=models.PROTECT, related_name="review_events",
+    )
+    reviewer = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT,
+        related_name="comment_reviews_performed",
+    )
+    decision = models.CharField(max_length=12, choices=Decision.choices)
+    previous_state = models.CharField(max_length=12)
+    new_state = models.CharField(max_length=12)
+    reason = models.CharField(max_length=500)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ("-created_at",)

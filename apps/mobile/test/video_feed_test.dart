@@ -3,10 +3,13 @@ import 'dart:convert';
 import 'package:anima_app/core/api_client.dart';
 import 'package:anima_app/core/video_feed_models.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 void main() {
+  setUp(() => FlutterSecureStorage.setMockInitialValues({}));
+
   const uid = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
   final clip = <String, dynamic>{
     'id': uid,
@@ -54,6 +57,22 @@ void main() {
     expect(page.posts.length, 1);
     expect(page.hasMore, isTrue);
     expect(seen.single.path, '/api/v1/feed/videos/');
+    api.dispose();
+  });
+
+  test('signed-in feed sends identity for block and own-reaction privacy', () async {
+    FlutterSecureStorage.setMockInitialValues({'anima_access': 'sample-test-token'});
+    final api = ApiClient(
+      baseUrl: 'https://api.example.invalid',
+      client: MockClient((request) async {
+        expect(request.headers['Authorization'], 'Bearer sample-test-token');
+        return http.Response(jsonEncode({
+          'count': 1, 'next': null, 'results': [clip],
+        }), 200);
+      }),
+    );
+    final page = await api.getVideoFeed();
+    expect(page.posts.length, 1);
     api.dispose();
   });
 

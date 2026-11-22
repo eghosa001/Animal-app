@@ -14,7 +14,7 @@ from modules.accounts.staff_auth_test_utils import verify_staff_test_session
 from modules.catalog.models import Species
 from modules.chats.models import ChatMessage, Conversation
 from modules.listings.models import Animal, Listing
-from modules.social.models import VideoPost
+from modules.social.models import VideoComment, VideoPost
 
 from .models import SafetyReport, SafetyReportReviewEvent, UserBlock
 
@@ -166,6 +166,31 @@ class SafetyBoundaryTests(APITestCase):
         mine = self.client.get("/api/v1/listings/mine/")
         self.assertEqual(mine.status_code, 200)
         self.assertEqual(mine.data["count"], 1)
+
+    def test_individual_comment_reports_are_private_and_require_visible_content(self):
+        comment = VideoComment.objects.create(
+            video=self.video, author=self.seller,
+            body="Thanks for caring about animal welfare",
+            client_nonce=uuid.uuid4(), status=VideoComment.Status.APPROVED,
+            moderated_at=timezone.now(), moderated_by=self.staff,
+        )
+        response = self.report("comment", comment.pk)
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertEqual(response.data["target_type"], "comment")
+        self.assertNotIn("body", response.data)
+        self.assertEqual(SafetyReport.objects.get(pk=response.data["id"]).comment_id, comment.pk)
+
+        comment.status = VideoComment.Status.PENDING
+        comment.save(update_fields=("status",))
+        self.assertEqual(self.report("comment", comment.pk).status_code, 404)
+        comment.status = VideoComment.Status.APPROVED
+        comment.save(update_fields=("status",))
+        UserBlock.objects.create(blocker=self.buyer, blocked=self.seller)
+        self.assertEqual(self.report("comment", comment.pk).status_code, 404)
+        UserBlock.objects.all().delete()
+        self.video.state = VideoPost.State.REMOVED
+        self.video.save(update_fields=("state",))
+        self.assertEqual(self.report("comment", comment.pk).status_code, 404)
 
     def test_report_all_target_types_with_minimal_private_receipts(self):
         for typ, target in (
