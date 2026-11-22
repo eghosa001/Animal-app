@@ -14,11 +14,19 @@ class VideoPostSerializer(serializers.ModelSerializer):
     playback_url = serializers.SerializerMethodField()
     poster_url = serializers.SerializerMethodField()
     listing = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
 
     class Meta:
         model = VideoPost
-        fields = ("id", "creator_id", "creator_name", "caption", "playback_url", "poster_url", "listing", "created_at")
+        fields = ("id", "creator_id", "creator_name", "caption", "playback_url", "poster_url", "listing", "likes_count", "is_liked", "created_at")
         read_only_fields = fields
+
+    def get_likes_count(self, obj):
+        return getattr(obj, "active_likes_count", 0)
+
+    def get_is_liked(self, obj):
+        return bool(getattr(obj, "viewer_has_liked", False))
 
     def get_playback_url(self, obj):
         host = settings.VIDEO_DELIVERY_HOST
