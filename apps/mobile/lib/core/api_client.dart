@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'listing_models.dart';
@@ -841,6 +842,37 @@ class ApiClient {
       '/api/v1/chats/conversations/$conversationId/read/',
       {'message_id': messageId},
     );
+  }
+
+  /// Obtain a 45-second participant-scoped ticket over authenticated HTTPS.
+  /// Never put login JWTs or signed tickets into a URL or application logs.
+  Future<WebSocket?> connectConversationUpdates(String conversationId) async {
+    if (!RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(conversationId)) {
+      throw const ApiFailure('Invalid private conversation');
+    }
+    final issued = await _authorizedChatPost(
+      '/api/v1/chats/conversations/$conversationId/socket-ticket/', {},
+    );
+    final ticket = issued['ticket'];
+    if (ticket is! String ||
+        !RegExp(r'^[A-Za-z0-9_-]{30,1024}$').hasMatch(ticket)) {
+      throw const ApiFailure('Could not establish a secure chat session');
+    }
+    final url = _uri('/ws/v1/chats/conversations/$conversationId/');
+    final socketUri = url.replace(
+      scheme: url.scheme == 'https' ? 'wss' : 'ws',
+    );
+    final socket = await WebSocket.connect(
+      socketUri.toString(),
+      protocols: ['anima.chat.v1', 'anima.ticket.$ticket'],
+      compression: CompressionOptions.compressionOff,
+    ).timeout(const Duration(seconds: 15));
+    if (socket.protocol != 'anima.chat.v1') {
+      await socket.close();
+      throw const ApiFailure('Chat stream failed secure protocol negotiation');
+    }
+    socket.pingInterval = const Duration(seconds: 30);
+    return socket;
   }
 
   /// Public, paginated list of safety-reviewed videos.

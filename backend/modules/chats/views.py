@@ -15,6 +15,7 @@ from modules.safety.models import UserBlock
 
 from .models import ChatMessage, Conversation
 from .read_receipts import acknowledge_read_message
+from .realtime import create_socket_ticket, send_message_notice
 from .serializers import (
     ChatMessageCreateSerializer, ChatMessageReadSerializer,
     ChatReadAcknowledgeSerializer,
@@ -135,6 +136,10 @@ class ConversationMessagesView(
             if created:
                 locked.updated_at = timezone.now()
                 locked.save(update_fields=("updated_at",))
+                transaction.on_commit(
+                    lambda conversation_id=locked.pk, message_id=msg.pk:
+                    send_message_notice(conversation_id=conversation_id, message_id=message_id)
+                )
         return Response(
             ChatMessageReadSerializer(msg).data,
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
@@ -165,3 +170,26 @@ class ConversationReadAcknowledgeView(generics.GenericAPIView):
             message_id=message.pk,
         )
         return Response({"last_read_message": str(acknowledged.pk)})
+
+
+class ConversationSocketTicketView(generics.GenericAPIView):
+    """Authenticated REST issues a short-lived scope-bound socket ticket."""
+
+    permission_classes = (IsAuthenticated,)
+    throttle_classes = (ScopedRateThrottle,)
+    throttle_scope = "chat_socket_ticket"
+
+    def post(self, request, conversation_id):
+        conversation = get_object_or_404(
+            Conversation.objects.filter(
+                Q(buyer=request.user) | Q(seller=request.user)
+            ), pk=conversation_id,
+        )
+        if not request.user.is_active or not request.user.is_email_verified:
+            raise PermissionDenied("Verified account required")
+        return Response({
+            "ticket": create_socket_ticket(
+                user=request.user, conversation=conversation,
+            ),
+            "expires_in_seconds": 45,
+        })

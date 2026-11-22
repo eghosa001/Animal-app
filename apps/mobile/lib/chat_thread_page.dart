@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 
@@ -21,7 +23,15 @@ class ChatThreadPage extends StatefulWidget {
   State<ChatThreadPage> createState() => _ChatThreadPageState();
 }
 
-class _ChatThreadPageState extends State<ChatThreadPage> {
+class _ChatThreadPageState extends State<ChatThreadPage> with WidgetsBindingObserver {
+  WebSocket? _socket;
+  StreamSubscription<dynamic>? _socketEvents;
+  Timer? _socketRetry;
+  Timer? _socketRefresh;
+  bool _socketEnabled = true;
+  bool _connectingSocket = false;
+  int _socketFailures = 0;
+
   final _input = TextEditingController();
   final _scroll = ScrollController();
   List<ChatMessage> _messages = [];
@@ -38,7 +48,98 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     unawaited(_load(reset: true));
+    unawaited(_connectSocket());
+  }
+
+  Future<void> _connectSocket() async {
+    if (!mounted || !_socketEnabled || _connectingSocket || _socket != null) {
+      return;
+    }
+    _connectingSocket = true;
+    try {
+      final socket = await widget.api.connectConversationUpdates(
+        widget.conversation.id,
+      );
+      if (!mounted || !_socketEnabled) {
+        await socket?.close();
+        return;
+      }
+      // A test/mock API may opt out of realtime while preserving REST messaging.
+      if (socket == null) { return; }
+      _socket = socket;
+      _socketFailures = 0;
+      _socketEvents = socket.listen((event) {
+        if (event is! String) { return; }
+        try {
+          final message = jsonDecode(event);
+          if (message is Map<String, dynamic> &&
+              message['type'] == 'message.created' &&
+              message['conversation_id'] == widget.conversation.id) {
+            _scheduleSocketRefresh();
+          }
+        } catch (_) {
+          // Ignore malformed remote notices; never execute server-provided code.
+        }
+      }, onDone: () => _socketDisconnected(socket), onError: (_) {
+        _socketDisconnected(socket);
+      }, cancelOnError: true);
+    } catch (_) {
+      _retrySocket();
+    } finally {
+      _connectingSocket = false;
+    }
+  }
+
+  void _scheduleSocketRefresh() {
+    _socketRefresh?.cancel();
+    _socketRefresh = Timer(const Duration(milliseconds: 350), () {
+      if (!mounted || !_socketEnabled) { return; }
+      if (_older || _loading) {
+        _scheduleSocketRefresh();
+      } else {
+        unawaited(_load(reset: true));
+      }
+    });
+  }
+
+  void _socketDisconnected(WebSocket disconnectedSocket) {
+    if (!identical(_socket, disconnectedSocket)) { return; }
+    _socket = null;
+    _socketEvents = null;
+    _retrySocket();
+  }
+
+  void _retrySocket() {
+    if (!mounted || !_socketEnabled) { return; }
+    _socketRetry?.cancel();
+    const delays = <int>[2, 4, 8, 15, 30];
+    final index = _socketFailures < delays.length
+        ? _socketFailures : delays.length - 1;
+    _socketFailures++;
+    _socketRetry = Timer(Duration(seconds: delays[index]), () {
+      if (mounted && _socketEnabled) {
+        unawaited(_connectSocket());
+      }
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _socketEnabled = true;
+      unawaited(_load(reset: true));
+      unawaited(_connectSocket());
+    } else {
+      _socketEnabled = false;
+      _socketRetry?.cancel();
+      _socketRefresh?.cancel();
+      unawaited(_socketEvents?.cancel());
+      unawaited(_socket?.close());
+      _socket = null;
+      _socketEvents = null;
+    }
   }
 
   Future<void> _load({required bool reset}) async {
@@ -169,6 +270,12 @@ class _ChatThreadPageState extends State<ChatThreadPage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _socketEnabled = false;
+    _socketRetry?.cancel();
+    _socketRefresh?.cancel();
+    unawaited(_socketEvents?.cancel());
+    unawaited(_socket?.close());
     _input.dispose();
     _scroll.dispose();
     super.dispose();
