@@ -7,7 +7,8 @@
   <p>Reporter: {{ report.reporter.email }}</p>
   <p>Video: {{ report.video_id|default:"—" }} | Listing:
     {{ report.listing_id|default:"—" }} | Chat message:
-    {{ report.message_id|default:"—" }} | Subject user:
+    {{ report.message_id|default:"—" }} | Video comment:
+    {{ report.comment_id|default:"—" }} | Subject user:
     {{ report.subject_user_id|default:"—" }}</p>
   <p>Reported details (untrusted user input): {{ report.detail }}</p>
   <p>Review the actual evidence using authorized private systems. Do not
