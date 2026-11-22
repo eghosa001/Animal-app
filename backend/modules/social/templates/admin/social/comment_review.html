@@ -1,0 +1,15 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+  <p><strong>Video:</strong> {{ comment.video_id }}</p>
+  <p><strong>Author:</strong> {{ comment.author }}</p>
+  <p><strong>Current state:</strong> {{ comment.status }}</p>
+  <p><strong>Comment:</strong></p>
+  <blockquote style="white-space:pre-wrap;word-break:break-word">{{ comment.body }}</blockquote>
+  <p>Comment text is user-supplied. Verify the linked media and animal-welfare policy before approving.</p>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {{ form.as_p }}
+    <input type="submit" value="Record review">
+  </form>
+{% endblock %}
