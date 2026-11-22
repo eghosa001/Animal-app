@@ -82,3 +82,26 @@ class VideoReviewEvent(models.Model):
 
     def __str__(self):
         return f"{self.video_id}: {self.decision}"
+
+
+class VideoLike(models.Model):
+    """Private identity of a reaction; only aggregate counts leave the API."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    video = models.ForeignKey(
+        VideoPost, on_delete=models.PROTECT, related_name="likes",
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT,
+        related_name="liked_animal_videos",
+    )
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("video", "user"), name="anima_video_one_like_per_user",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=("user", "-created_at"), name="anima_video_likes_user_idx"),
+        ]
