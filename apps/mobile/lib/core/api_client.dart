@@ -875,6 +875,41 @@ class ApiClient {
     return socket;
   }
 
+  /// Idempotent approved-video reaction; only update UI after server receipt.
+  Future<VideoLikeResult> setVideoLiked(String videoId, bool liked) async {
+    if (!RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(videoId)) {
+      throw const ApiFailure('Invalid video reference');
+    }
+    final uri = _uri('/api/v1/feed/videos/$videoId/like/');
+    Future<http.Response> send(String token) {
+      final headers = {'Authorization': 'Bearer $token'};
+      if (liked) {
+        return _client.put(uri, headers: headers)
+            .timeout(const Duration(seconds: 15));
+      }
+      return _client.delete(uri, headers: headers)
+          .timeout(const Duration(seconds: 15));
+    }
+
+    var access = await _storage.read(key: 'anima_access');
+    if (access == null) {
+      throw const ApiFailure('Sign in to like animal videos');
+    }
+    var response = await send(access);
+    if (response.statusCode == 401) {
+      access = await _refresh();
+      if (access == null) {
+        throw const ApiFailure('Session expired. Sign in again.');
+      }
+      response = await send(access);
+    }
+    try {
+      return VideoLikeResult.fromJson(_decode(response));
+    } on FormatException {
+      throw const ApiFailure('Unexpected video reaction response');
+    }
+  }
+
   /// Public, paginated list of safety-reviewed videos.
   Future<AnimalVideoPage> getVideoFeed({int page = 1}) async {
     if (page < 1) throw const ApiFailure('Invalid video page');
