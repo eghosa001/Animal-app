@@ -3,10 +3,13 @@ import 'dart:convert';
 import 'package:anima_app/core/api_client.dart';
 import 'package:anima_app/core/video_feed_models.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 void main() {
+  setUp(() => FlutterSecureStorage.setMockInitialValues({}));
+
   const uid = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
   final clip = <String, dynamic>{
     'id': uid,
