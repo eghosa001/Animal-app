@@ -910,6 +910,517 @@ class ApiClient {
     }
   }
 
+  /// Preserve blocked-user and own-reaction filtering for signed-in viewers.
+  /// Never silently fall back to anonymous visibility after an expired login.
+  Future<http.Response> _optionalAuthGet(String path) async {
+    var access = await _storage.read(key: 'anima_access');
+    Future<http.Response> send(String? token) => _client.get(
+      _uri(path),
+      headers: {if (token != null) 'Authorization': 'Bearer $token'},
+    ).timeout(const Duration(seconds: 15));
+    var response = await send(access);
+    if (response.statusCode == 401 && access != null) {
+      access = await _refresh();
+      if (access == null) {
+        throw const ApiFailure('Session expired. Sign in again.');
+      }
+      response = await send(access);
+    }
+    return response;
+  }
+
+  Future<VideoCommentPage> getVideoComments(
+      String videoId, {int page = 1}) async {
+    if (!RegExp(r'^[0-9a-fA-F-]{36}
+    if (page < 1) throw const ApiFailure('Invalid video page');
+    final response = await _optionalAuthGet(
+      '/api/v1/feed/videos/?page=$page',
+    );
+    final data = _decode(response);
+    final raw = data['results'];
+    if (raw is! List) throw const ApiFailure('Unexpected video response');
+    try {
+      return AnimalVideoPage(
+        posts: raw.map((item) =>
+            AnimalVideoPost.fromJson(item as Map<String, dynamic>)).toList(),
+        hasMore: data['next'] != null,
+      );
+    } on FormatException {
+      throw const ApiFailure('Unsupported video source');
+    } on TypeError {
+      throw const ApiFailure('Unexpected video response');
+    }
+  }
+
+  Future<AnimalListing> getListing(String id) async {
+    if (!RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(id)) {
+      throw const ApiFailure('Invalid animal listing');
+    }
+    final response = await _client.get(
+      _uri('/api/v1/listings/$id/'),
+    ).timeout(const Duration(seconds: 15));
+    return AnimalListing.fromJson(_decode(response));
+  }
+
+  Future<List<AnimalListing>> getListings() async {
+    final response = await _client.get(
+      _uri('/api/v1/listings/'),
+    ).timeout(const Duration(seconds: 15));
+    final payload = _decode(response);
+    final raw = payload['results'] as List<dynamic>? ?? [];
+    return raw.map((item) => AnimalListing.fromJson(item as Map<String, dynamic>)).toList();
+  }
+
+  /// Revoke every existing access and refresh session after password confirmation.
+  /// Clear this phone only after the server confirms revocation; never report
+  /// success on an HTTP error or network failure.
+  Future<void> logoutAll(String currentPassword) async {
+    Future<http.Response> send(String access) => _post(
+      '/api/v1/auth/logout-all',
+      {'current_password': currentPassword},
+      token: access,
+    );
+
+    var access = await _storage.read(key: 'anima_access');
+    if (access == null) {
+      throw const ApiFailure('Please sign in to manage account sessions');
+    }
+    var response = await send(access);
+    if (response.statusCode == 401) {
+      access = await _refresh();
+      if (access == null) {
+        throw const ApiFailure('Session expired. Sign in again.');
+      }
+      response = await send(access);
+    }
+    if (response.statusCode != 204) {
+      _decode(response);
+      throw const ApiFailure('Could not sign out other devices');
+    }
+    await _storage.delete(key: 'anima_access');
+    await _storage.delete(key: 'anima_refresh');
+  }
+
+  Future<void> logout() async {
+    final refresh = await _storage.read(key: 'anima_refresh');
+    final access = await _storage.read(key: 'anima_access');
+    try {
+      if (refresh != null && access != null) {
+        await _post('/api/v1/auth/logout', {'refresh': refresh}, token: access);
+      }
+    } finally {
+      await _storage.delete(key: 'anima_access');
+      await _storage.delete(key: 'anima_refresh');
+    }
+  }
+
+  void dispose() => _client.close();
+}
+).hasMatch(videoId) || page < 1) {
+      throw const ApiFailure('Invalid comment page');
+    }
+    final response = await _optionalAuthGet(
+      '/api/v1/feed/videos/$videoId/comments/?page=$page',
+    );
+    final data = _decode(response);
+    final raw = data['results'];
+    if (raw is! List) throw const ApiFailure('Unexpected comment response');
+    try {
+      return VideoCommentPage(
+        comments: raw.map((item) =>
+          VideoComment.fromJson(item as Map<String, dynamic>)).toList(),
+        hasMore: data['next'] != null,
+      );
+    } on FormatException {
+      throw const ApiFailure('Unexpected comment response');
+    } on TypeError {
+      throw const ApiFailure('Unexpected comment response');
+    }
+  }
+
+  Future<VideoCommentReceipt> postVideoComment(
+      String videoId, String body, {required String clientNonce}) async {
+    if (!RegExp(r'^[0-9a-fA-F-]{36}
+    if (page < 1) throw const ApiFailure('Invalid video page');
+    final response = await _client.get(
+      _uri('/api/v1/feed/videos/?page=$page'),
+    ).timeout(const Duration(seconds: 15));
+    final data = _decode(response);
+    final raw = data['results'];
+    if (raw is! List) throw const ApiFailure('Unexpected video response');
+    try {
+      return AnimalVideoPage(
+        posts: raw.map((item) =>
+            AnimalVideoPost.fromJson(item as Map<String, dynamic>)).toList(),
+        hasMore: data['next'] != null,
+      );
+    } on FormatException {
+      throw const ApiFailure('Unsupported video source');
+    } on TypeError {
+      throw const ApiFailure('Unexpected video response');
+    }
+  }
+
+  Future<AnimalListing> getListing(String id) async {
+    if (!RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(id)) {
+      throw const ApiFailure('Invalid animal listing');
+    }
+    final response = await _client.get(
+      _uri('/api/v1/listings/$id/'),
+    ).timeout(const Duration(seconds: 15));
+    return AnimalListing.fromJson(_decode(response));
+  }
+
+  Future<List<AnimalListing>> getListings() async {
+    final response = await _client.get(
+      _uri('/api/v1/listings/'),
+    ).timeout(const Duration(seconds: 15));
+    final payload = _decode(response);
+    final raw = payload['results'] as List<dynamic>? ?? [];
+    return raw.map((item) => AnimalListing.fromJson(item as Map<String, dynamic>)).toList();
+  }
+
+  /// Revoke every existing access and refresh session after password confirmation.
+  /// Clear this phone only after the server confirms revocation; never report
+  /// success on an HTTP error or network failure.
+  Future<void> logoutAll(String currentPassword) async {
+    Future<http.Response> send(String access) => _post(
+      '/api/v1/auth/logout-all',
+      {'current_password': currentPassword},
+      token: access,
+    );
+
+    var access = await _storage.read(key: 'anima_access');
+    if (access == null) {
+      throw const ApiFailure('Please sign in to manage account sessions');
+    }
+    var response = await send(access);
+    if (response.statusCode == 401) {
+      access = await _refresh();
+      if (access == null) {
+        throw const ApiFailure('Session expired. Sign in again.');
+      }
+      response = await send(access);
+    }
+    if (response.statusCode != 204) {
+      _decode(response);
+      throw const ApiFailure('Could not sign out other devices');
+    }
+    await _storage.delete(key: 'anima_access');
+    await _storage.delete(key: 'anima_refresh');
+  }
+
+  Future<void> logout() async {
+    final refresh = await _storage.read(key: 'anima_refresh');
+    final access = await _storage.read(key: 'anima_access');
+    try {
+      if (refresh != null && access != null) {
+        await _post('/api/v1/auth/logout', {'refresh': refresh}, token: access);
+      }
+    } finally {
+      await _storage.delete(key: 'anima_access');
+      await _storage.delete(key: 'anima_refresh');
+    }
+  }
+
+  void dispose() => _client.close();
+}
+).hasMatch(videoId) ||
+        !RegExp(r'^[0-9a-fA-F-]{36}
+    if (page < 1) throw const ApiFailure('Invalid video page');
+    final response = await _client.get(
+      _uri('/api/v1/feed/videos/?page=$page'),
+    ).timeout(const Duration(seconds: 15));
+    final data = _decode(response);
+    final raw = data['results'];
+    if (raw is! List) throw const ApiFailure('Unexpected video response');
+    try {
+      return AnimalVideoPage(
+        posts: raw.map((item) =>
+            AnimalVideoPost.fromJson(item as Map<String, dynamic>)).toList(),
+        hasMore: data['next'] != null,
+      );
+    } on FormatException {
+      throw const ApiFailure('Unsupported video source');
+    } on TypeError {
+      throw const ApiFailure('Unexpected video response');
+    }
+  }
+
+  Future<AnimalListing> getListing(String id) async {
+    if (!RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(id)) {
+      throw const ApiFailure('Invalid animal listing');
+    }
+    final response = await _client.get(
+      _uri('/api/v1/listings/$id/'),
+    ).timeout(const Duration(seconds: 15));
+    return AnimalListing.fromJson(_decode(response));
+  }
+
+  Future<List<AnimalListing>> getListings() async {
+    final response = await _client.get(
+      _uri('/api/v1/listings/'),
+    ).timeout(const Duration(seconds: 15));
+    final payload = _decode(response);
+    final raw = payload['results'] as List<dynamic>? ?? [];
+    return raw.map((item) => AnimalListing.fromJson(item as Map<String, dynamic>)).toList();
+  }
+
+  /// Revoke every existing access and refresh session after password confirmation.
+  /// Clear this phone only after the server confirms revocation; never report
+  /// success on an HTTP error or network failure.
+  Future<void> logoutAll(String currentPassword) async {
+    Future<http.Response> send(String access) => _post(
+      '/api/v1/auth/logout-all',
+      {'current_password': currentPassword},
+      token: access,
+    );
+
+    var access = await _storage.read(key: 'anima_access');
+    if (access == null) {
+      throw const ApiFailure('Please sign in to manage account sessions');
+    }
+    var response = await send(access);
+    if (response.statusCode == 401) {
+      access = await _refresh();
+      if (access == null) {
+        throw const ApiFailure('Session expired. Sign in again.');
+      }
+      response = await send(access);
+    }
+    if (response.statusCode != 204) {
+      _decode(response);
+      throw const ApiFailure('Could not sign out other devices');
+    }
+    await _storage.delete(key: 'anima_access');
+    await _storage.delete(key: 'anima_refresh');
+  }
+
+  Future<void> logout() async {
+    final refresh = await _storage.read(key: 'anima_refresh');
+    final access = await _storage.read(key: 'anima_access');
+    try {
+      if (refresh != null && access != null) {
+        await _post('/api/v1/auth/logout', {'refresh': refresh}, token: access);
+      }
+    } finally {
+      await _storage.delete(key: 'anima_access');
+      await _storage.delete(key: 'anima_refresh');
+    }
+  }
+
+  void dispose() => _client.close();
+}
+).hasMatch(clientNonce) ||
+        body.trim().length < 3 || body.trim().length > 500) {
+      throw const ApiFailure('Write a comment of 3–500 characters');
+    }
+    final result = await _authorizedChatPost(
+      '/api/v1/feed/videos/$videoId/comments/',
+      {'body': body.trim(), 'client_nonce': clientNonce},
+    );
+    try {
+      return VideoCommentReceipt.fromJson(result);
+    } on FormatException {
+      throw const ApiFailure('Unexpected comment submission response');
+    }
+  }
+
+  Future<void> deleteVideoComment(String videoId, String commentId) async {
+    if (!RegExp(r'^[0-9a-fA-F-]{36}
+    if (page < 1) throw const ApiFailure('Invalid video page');
+    final response = await _client.get(
+      _uri('/api/v1/feed/videos/?page=$page'),
+    ).timeout(const Duration(seconds: 15));
+    final data = _decode(response);
+    final raw = data['results'];
+    if (raw is! List) throw const ApiFailure('Unexpected video response');
+    try {
+      return AnimalVideoPage(
+        posts: raw.map((item) =>
+            AnimalVideoPost.fromJson(item as Map<String, dynamic>)).toList(),
+        hasMore: data['next'] != null,
+      );
+    } on FormatException {
+      throw const ApiFailure('Unsupported video source');
+    } on TypeError {
+      throw const ApiFailure('Unexpected video response');
+    }
+  }
+
+  Future<AnimalListing> getListing(String id) async {
+    if (!RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(id)) {
+      throw const ApiFailure('Invalid animal listing');
+    }
+    final response = await _client.get(
+      _uri('/api/v1/listings/$id/'),
+    ).timeout(const Duration(seconds: 15));
+    return AnimalListing.fromJson(_decode(response));
+  }
+
+  Future<List<AnimalListing>> getListings() async {
+    final response = await _client.get(
+      _uri('/api/v1/listings/'),
+    ).timeout(const Duration(seconds: 15));
+    final payload = _decode(response);
+    final raw = payload['results'] as List<dynamic>? ?? [];
+    return raw.map((item) => AnimalListing.fromJson(item as Map<String, dynamic>)).toList();
+  }
+
+  /// Revoke every existing access and refresh session after password confirmation.
+  /// Clear this phone only after the server confirms revocation; never report
+  /// success on an HTTP error or network failure.
+  Future<void> logoutAll(String currentPassword) async {
+    Future<http.Response> send(String access) => _post(
+      '/api/v1/auth/logout-all',
+      {'current_password': currentPassword},
+      token: access,
+    );
+
+    var access = await _storage.read(key: 'anima_access');
+    if (access == null) {
+      throw const ApiFailure('Please sign in to manage account sessions');
+    }
+    var response = await send(access);
+    if (response.statusCode == 401) {
+      access = await _refresh();
+      if (access == null) {
+        throw const ApiFailure('Session expired. Sign in again.');
+      }
+      response = await send(access);
+    }
+    if (response.statusCode != 204) {
+      _decode(response);
+      throw const ApiFailure('Could not sign out other devices');
+    }
+    await _storage.delete(key: 'anima_access');
+    await _storage.delete(key: 'anima_refresh');
+  }
+
+  Future<void> logout() async {
+    final refresh = await _storage.read(key: 'anima_refresh');
+    final access = await _storage.read(key: 'anima_access');
+    try {
+      if (refresh != null && access != null) {
+        await _post('/api/v1/auth/logout', {'refresh': refresh}, token: access);
+      }
+    } finally {
+      await _storage.delete(key: 'anima_access');
+      await _storage.delete(key: 'anima_refresh');
+    }
+  }
+
+  void dispose() => _client.close();
+}
+).hasMatch(videoId) ||
+        !RegExp(r'^[0-9a-fA-F-]{36}
+    if (page < 1) throw const ApiFailure('Invalid video page');
+    final response = await _client.get(
+      _uri('/api/v1/feed/videos/?page=$page'),
+    ).timeout(const Duration(seconds: 15));
+    final data = _decode(response);
+    final raw = data['results'];
+    if (raw is! List) throw const ApiFailure('Unexpected video response');
+    try {
+      return AnimalVideoPage(
+        posts: raw.map((item) =>
+            AnimalVideoPost.fromJson(item as Map<String, dynamic>)).toList(),
+        hasMore: data['next'] != null,
+      );
+    } on FormatException {
+      throw const ApiFailure('Unsupported video source');
+    } on TypeError {
+      throw const ApiFailure('Unexpected video response');
+    }
+  }
+
+  Future<AnimalListing> getListing(String id) async {
+    if (!RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(id)) {
+      throw const ApiFailure('Invalid animal listing');
+    }
+    final response = await _client.get(
+      _uri('/api/v1/listings/$id/'),
+    ).timeout(const Duration(seconds: 15));
+    return AnimalListing.fromJson(_decode(response));
+  }
+
+  Future<List<AnimalListing>> getListings() async {
+    final response = await _client.get(
+      _uri('/api/v1/listings/'),
+    ).timeout(const Duration(seconds: 15));
+    final payload = _decode(response);
+    final raw = payload['results'] as List<dynamic>? ?? [];
+    return raw.map((item) => AnimalListing.fromJson(item as Map<String, dynamic>)).toList();
+  }
+
+  /// Revoke every existing access and refresh session after password confirmation.
+  /// Clear this phone only after the server confirms revocation; never report
+  /// success on an HTTP error or network failure.
+  Future<void> logoutAll(String currentPassword) async {
+    Future<http.Response> send(String access) => _post(
+      '/api/v1/auth/logout-all',
+      {'current_password': currentPassword},
+      token: access,
+    );
+
+    var access = await _storage.read(key: 'anima_access');
+    if (access == null) {
+      throw const ApiFailure('Please sign in to manage account sessions');
+    }
+    var response = await send(access);
+    if (response.statusCode == 401) {
+      access = await _refresh();
+      if (access == null) {
+        throw const ApiFailure('Session expired. Sign in again.');
+      }
+      response = await send(access);
+    }
+    if (response.statusCode != 204) {
+      _decode(response);
+      throw const ApiFailure('Could not sign out other devices');
+    }
+    await _storage.delete(key: 'anima_access');
+    await _storage.delete(key: 'anima_refresh');
+  }
+
+  Future<void> logout() async {
+    final refresh = await _storage.read(key: 'anima_refresh');
+    final access = await _storage.read(key: 'anima_access');
+    try {
+      if (refresh != null && access != null) {
+        await _post('/api/v1/auth/logout', {'refresh': refresh}, token: access);
+      }
+    } finally {
+      await _storage.delete(key: 'anima_access');
+      await _storage.delete(key: 'anima_refresh');
+    }
+  }
+
+  void dispose() => _client.close();
+}
+).hasMatch(commentId)) {
+      throw const ApiFailure('Invalid comment');
+    }
+    Future<http.Response> send(String access) => _client.delete(
+      _uri('/api/v1/feed/videos/$videoId/comments/$commentId/'),
+      headers: {'Authorization': 'Bearer $access'},
+    ).timeout(const Duration(seconds: 15));
+    var access = await _storage.read(key: 'anima_access');
+    if (access == null) throw const ApiFailure('Sign in to manage comments');
+    var response = await send(access);
+    if (response.statusCode == 401) {
+      access = await _refresh();
+      if (access == null) {
+        throw const ApiFailure('Session expired. Sign in again.');
+      }
+      response = await send(access);
+    }
+    if (response.statusCode != 204) {
+      _decode(response);
+      throw const ApiFailure('Could not withdraw comment');
+    }
+  }
+
   /// Public, paginated list of safety-reviewed videos.
   Future<AnimalVideoPage> getVideoFeed({int page = 1}) async {
     if (page < 1) throw const ApiFailure('Invalid video page');
