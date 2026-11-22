@@ -9,6 +9,7 @@ class AnimalVideoPost {
     required this.posterUrl,
     this.listing,
     this.likesCount = 0,
+    this.commentsCount = 0,
     this.isLiked = false,
   });
 
@@ -20,14 +21,16 @@ class AnimalVideoPost {
   final String posterUrl;
   final VideoListingLink? listing;
   final int likesCount;
+  final int commentsCount;
   final bool isLiked;
 
-  AnimalVideoPost copyWith({int? likesCount, bool? isLiked}) {
+  AnimalVideoPost copyWith({int? likesCount, int? commentsCount, bool? isLiked}) {
     return AnimalVideoPost(
       id: id, creatorName: creatorName, creatorId: creatorId,
       caption: caption, playbackUrl: playbackUrl, posterUrl: posterUrl,
       listing: listing,
       likesCount: likesCount ?? this.likesCount,
+      commentsCount: commentsCount ?? this.commentsCount,
       isLiked: isLiked ?? this.isLiked,
     );
   }
@@ -43,6 +46,7 @@ class AnimalVideoPost {
       creatorName: json['creator_name']?.toString() ?? 'Animal creator',
       creatorId: json['creator_id']?.toString() ?? '',
       likesCount: (json['likes_count'] as num?)?.toInt() ?? 0,
+      commentsCount: (json['comments_count'] as num?)?.toInt() ?? 0,
       isLiked: json['is_liked'] == true,
       caption: json['caption']?.toString() ?? '',
       playbackUrl: playback.toString(),
@@ -101,5 +105,52 @@ class VideoLikeResult {
       likesCount: count,
       isLiked: data['is_liked'] as bool,
     );
+  }
+}
+
+
+class VideoComment {
+  const VideoComment({
+    required this.id,
+    required this.authorName,
+    required this.body,
+  });
+  final String id;
+  final String authorName;
+  final String body;
+
+  factory VideoComment.fromJson(Map<String, dynamic> value) {
+    final id = value['id'];
+    final body = value['body'];
+    if (id is! String || id.isEmpty || body is! String || body.isEmpty) {
+      throw const FormatException('Unexpected comment response');
+    }
+    return VideoComment(
+      id: id,
+      authorName: value['author_name']?.toString() ?? 'Animal user',
+      body: body,
+    );
+  }
+}
+
+class VideoCommentPage {
+  const VideoCommentPage({required this.comments, required this.hasMore});
+  final List<VideoComment> comments;
+  final bool hasMore;
+}
+
+class VideoCommentReceipt {
+  const VideoCommentReceipt({required this.id, required this.status});
+  final String id;
+  final String status;
+
+  factory VideoCommentReceipt.fromJson(Map<String, dynamic> value) {
+    final id = value['id'];
+    final status = value['status'];
+    if (id is! String || id.isEmpty ||
+        !const {'pending', 'approved', 'rejected', 'removed'}.contains(status)) {
+      throw const FormatException('Unexpected comment submission response');
+    }
+    return VideoCommentReceipt(id: id, status: status as String);
   }
 }
