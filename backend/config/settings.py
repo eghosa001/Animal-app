@@ -110,6 +110,17 @@ REST_FRAMEWORK = {
         "order_intent_cancel": "8/hour",
     },
 }
+# Redis fanout is required for multiple API/WebSocket workers in production.
+CHANNEL_LAYERS = {
+    "default": (
+        {"BACKEND": "channels_redis.core.RedisChannelLayer", "CONFIG": {
+            "hosts": [os.environ["REDIS_URL"]],
+            "prefix": "anima-chat-v1",
+        }} if os.getenv("REDIS_URL") else
+        {"BACKEND": "channels.layers.InMemoryChannelLayer"}
+    )
+}
+
 # Shared Redis throttling is mandatory outside debug. In-process cache is
 # intentionally restricted to single-developer local runs.
 redis_url = os.getenv("REDIS_URL")
