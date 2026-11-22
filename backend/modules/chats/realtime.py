@@ -9,6 +9,7 @@ import uuid
 
 from asgiref.sync import async_to_sync
 from django.core import signing
+from django.db.models import Q
 from django.utils.crypto import salted_hmac
 from django.utils import timezone
 from channels.layers import get_channel_layer
@@ -38,7 +39,7 @@ def create_socket_ticket(*, user, conversation):
     return base64.urlsafe_b64encode(blob.encode("ascii")).decode("ascii").rstrip("=")
 
 
-def validate_socket_ticket(encoded, conversation_id):
+def validate_socket_ticket(encoded, conversation_id, *, max_age=_TICKET_MAX_AGE):
     """Return UUID of authorized user, or None; never reveal ticket failure details."""
     try:
         if len(encoded) > 1024 or len(encoded) < 30 or not all(
@@ -47,7 +48,7 @@ def validate_socket_ticket(encoded, conversation_id):
             return None
         padded = encoded + ("=" * (-len(encoded) % 4))
         decoded = base64.urlsafe_b64decode(padded).decode("ascii")
-        data = signing.loads(decoded, salt=_TICKET_SALT, max_age=_TICKET_MAX_AGE)
+        data = signing.loads(decoded, salt=_TICKET_SALT, max_age=max_age)
         user_id = uuid.UUID(data["u"])
         scoped_id = uuid.UUID(data["c"])
         if scoped_id != uuid.UUID(str(conversation_id)):
@@ -59,8 +60,7 @@ def validate_socket_ticket(encoded, conversation_id):
         if data["s"] != _session_tag(user):
             return None
         if not Conversation.objects.filter(pk=scoped_id).filter(
-            __import__("django").db.models.Q(buyer=user)
-            | __import__("django").db.models.Q(seller=user)
+            Q(buyer=user) | Q(seller=user)
         ).exists():
             return None
         return user_id
